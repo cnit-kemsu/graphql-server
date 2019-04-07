@@ -1,0 +1,97 @@
+DROP DATABASE IF EXISTS openedu;
+CREATE DATABASE openedu;
+USE openedu;
+
+CREATE TABLE users (
+
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+  username VARCHAR(50) NOT NULL,
+  salt_pwdhash VARCHAR(132) NOT NULL,
+  email VARCHAR(50),
+  verified BOOL DEFAULT FALSE,
+
+  PRIMARY KEY(id),
+  UNIQUE(username)
+
+);
+
+CREATE TABLE students (
+
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+  firstname VARCHAR(50) NOT NULL,
+  lastname VARCHAR(50) NOT NULL,
+  middlename VARCHAR(50),
+  birthdate DATE,
+  country VARCHAR(50),
+  city VARCHAR(50),
+
+  PRIMARY KEY(id)
+
+);
+
+CREATE TABLE instructors (
+
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+  firstname VARCHAR(50) NOT NULL,
+  lastname VARCHAR(50) NOT NULL,
+  middlename VARCHAR(50) NOT NULL,
+
+  PRIMARY KEY(id)
+
+);
+
+CREATE TABLE courses (
+
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+  name VARCHAR(50) NOT NULL,
+  price FLOAT,
+  description TEXT,
+  
+  PRIMARY KEY(id)
+);
+
+
+CREATE TABLE sections (
+
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+  name VARCHAR(50) NOT NULL,
+  course_id INT UNSIGNED NOT NULL,
+  
+  PRIMARY KEY(id),
+  FOREIGN KEY(course_id) REFERENCES courses(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+
+CREATE TABLE subsections (
+
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+  name VARCHAR(50) NOT NULL,
+  section_id INT UNSIGNED NOT NULL,
+  
+  PRIMARY KEY(id),
+  FOREIGN KEY(section_id) REFERENCES sections(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE blocks (
+
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+  name VARCHAR(50) NOT NULL,
+  subsection_id INT UNSIGNED NOT NULL,
+  type  VARCHAR(50) NOT NULL,
+  data JSON,
+  
+  PRIMARY KEY(id),
+  FOREIGN KEY(subsection_id) REFERENCES subsections(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CHECK(JSON_VALID(data))
+);
+
+#block_data
+#block_data_files
+#course_release

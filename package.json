@@ -48,11 +48,13 @@
   },
   "scripts": {
     "start": "npm-run-all --parallel server dev-server",
-    "server": "node_modules/.bin/nodemon --watch test/server --exec node -r @babel/register test/server/App.js",
+    "server": "node_modules/.bin/nodemon --watch test/server --exec node --inspect=9229 -r @babel/register test/server/App.js",
     "dev-server": "node_modules/.bin/nodemon --watch webpack.config.babel.js --exec webpack-dev-server",
     "initdb": "node -r @babel/register test/initdb.js"
   },
   "dependencies": {
-    "@kemsu/graphiql": "github:cnit-kemsu/graphiql"
+    "@kemsu/graphiql": "github:cnit-kemsu/graphiql",
+    "graphql-fields": "^2.0.3",
+    "mariadb": "^2.0.3"
   }
 }
