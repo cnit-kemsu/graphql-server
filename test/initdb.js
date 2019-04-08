@@ -1,13 +1,25 @@
-import sqlite from 'sqlite';
+import path from 'path';
+import fs from 'fs';
+import mariadb from 'mariadb';
+import connect from './connect.json';
+
+const dbSchema = path.resolve(__dirname, './db_schema.sql')
+|> fs.readFileSync(#).toString();
+const pool = mariadb.createPool(connect);
 
 async function initdb() {
-  const db = await sqlite.open('./test/localdb');
-  await db.run(`CREATE TABLE IF NOT EXISTS users (
-    id integer NOT NULL PRIMARY KEY,
-    username text NOT NULL UNIQUE,
-    email text
-  )`);
-  db.close();
+  let db;
+  try {
+    db = await pool.getConnection();
+    await db.query(dbSchema);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    db.end();
+  }
 }
 
 initdb();
+
+
+
