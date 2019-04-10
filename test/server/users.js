@@ -1,5 +1,7 @@
-import * as _ from '../../src/GraphqlType';
+import * as _ from '../../src/graphql-types';
 import { Mapping } from '../../src/Mapping';
+import { hashPassword } from '../../src/pwdhash';
+import { NestedType } from './nested';
 
 async function wait(time) {
   await new Promise(resolve => {
@@ -16,12 +18,22 @@ const { toColumns, toFilter, toAssignment } = new Mapping({
   username: 'username = ?'
 });
 
+
+
 const UserType = new _.Object({
   name: 'User',
   fields: () => ({
     id: { type: new _.NonNull(_.Int) },
     username: { type: new _.NonNull(_.String) },
-    email: { type: _.String }
+    email: { type: _.String },
+    nested: {
+      type: NestedType,
+      resolve(obj, {}, {}, info) {
+        return {
+          first: 'lalala'
+        };
+      }
+    }
   })
 });
 
@@ -38,21 +50,19 @@ const users = {
     offset: { type: _.Int },
     ...searchArgs
   },
-  resolve: async (obj, { limit = 10, offset = 0, ...search }, { db }, info) => {
+  resolve(obj, { limit = 10, offset = 0, ...search }, { db, user }, info) {
     const cols = toColumns(info);
     const [filter, params] = toFilter(search);
-    const result = await db.query(`SELECT ${cols} FROM users ${filter} LIMIT ? OFFSET ?`, [ ...params, limit, offset ]);
-    return result;
+    return db.query(`SELECT ${cols} FROM users ${filter} LIMIT ? OFFSET ?`, [ ...params, limit, offset ]);
   }
 };
 
 const totalUsers = {
   type: _.Int,
   args: searchArgs,
-  resolve: async (obj, search, { db }) => {
+  resolve(obj, search, { db }) {
     const [filter, params] = toFilter(search);
-    const result = await db.query(`SELECT COUNT(*) FROM users ${filter}`, params);
-    return result;
+    return db.query(`SELECT COUNT(*) FROM users ${filter}`, params);
   }
 };
 
@@ -60,11 +70,15 @@ const createUser = {
   type: _.Int,
   args: {
     username: { type: new _.NonNull(_.String) },
-    email: { type: _.String }
+    email: { type: _.String },
+    password: { type: new _.NonNull(_.String) }
   },
-  async resolve(obj, input, { db }) {
-    await wait(2000); // DEBUG
-    const [assignment, params] = toAssignment(input);
+  async resolve(obj, { password, ...input }, { db }) {
+    await wait(2000);
+    const [assignment, params] = toAssignment({
+      pwdhash: hashPassword(password),
+      ...input
+    });
     return await db.query(`INSERT INTO users ${assignment}`, params)
       |> #.insertId;
   }
@@ -78,7 +92,7 @@ const updateUser = {
     email: { type: _.String }
   },
   async resolve(obj, { id, ...input }, { db }) {
-    await wait(500); // DEBUG
+    await wait(500);
     const [assignment, params] = toAssignment(input);
     return await db.query(`UPDATE users ${assignment} WHERE id = ?`, [ ...params, id ])
       |> #.affectedRows;
@@ -91,13 +105,13 @@ const deleteUser = {
     id: { type: new _.NonNull(_.Int) }
   },
   async resolve(obj, { id }, { db }) {
-    await wait(1000); // DEBUG
+    await wait(1000);
     return await db.query('DELETE FROM users WHERE id = ?', id)
       |> #.affectedRows;
   }
 };
 
-module.exports = [{
+export default [{
     users,
     totalUsers
   }, {

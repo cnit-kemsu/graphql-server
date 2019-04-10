@@ -10,7 +10,6 @@
     "node_modules/**/*.js"
   ],
   "peerDependencies": {
-    "mariadb": "^2.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.3.4",
@@ -39,6 +38,7 @@
     "html-webpack-plugin": "^3.2.0",
     "ignore-loader": "^0.1.2",
     "inspectpack": "^4.2.1",
+    "mariadb": "^2.0.3",
     "nodemon": "^1.18.10",
     "npm-run-all": "^4.1.5",
     "react": "^16.8.5",
@@ -53,9 +53,13 @@
     "start": "npm-run-all --parallel server dev-server",
     "server": "node_modules/.bin/nodemon --watch test/server --watch src --exec node --inspect=9229 -r @babel/register test/server/App.js",
     "dev-server": "node_modules/.bin/nodemon --watch webpack.config.babel.js --exec webpack-dev-server",
-    "initdb": "node -r @babel/register test/initdb.js"
+    "initdb": "node -r @babel/register test/server/initdb.js"
   },
   "dependencies": {
-    "graphql-fields": "^2.0.3"
+    "dataloader": "^1.4.0",
+    "graphql-fields": "^2.0.3",
+    "graphql-type-json": "^0.2.4",
+    "jsonwebtoken": "^8.5.1",
+    "mariadb": "^2.0.3"
   }
 }

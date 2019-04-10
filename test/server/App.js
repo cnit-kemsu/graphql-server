@@ -1,26 +1,12 @@
 import express from 'express';
-import graphqlHTTP from 'express-graphql';
-import mariadb from 'mariadb';
-import schema from './schema';
-
-import connect from '../connect.json';
-const pool = mariadb.createPool(connect);
+import { graphqlResolver } from '../../src/graphql-middleware';
+import { dbConfig, jwtSecret } from './config.js';
+import { userInfo } from '../../src/auth-middleware';
+import schema from './graphql_schema';
 
 const app = express();
 
-app.use('/graphql', graphqlHTTP( 
-  async () => {
-    const db = await pool.getConnection();
-    return {
-        schema,
-        context: {
-          db
-        },
-        extensions() {
-          db.end();
-        }
-    };
-  }
-));
+app.use(userInfo(jwtSecret));
+app.use('/graphql', graphqlResolver(dbConfig, schema));
 
 app.listen(8080);

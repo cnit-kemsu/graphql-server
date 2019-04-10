@@ -1,7 +1,0 @@
-{
-  "host": "localhost",
-  "user": "root",
-  "password": "keepthefaith",
-  "database": "test_db",
-  "port": 3306
-}

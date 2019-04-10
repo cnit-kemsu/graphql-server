@@ -8,6 +8,7 @@ CREATE TABLE users (
 
   username VARCHAR(50) NOT NULL,
   email VARCHAR(50),
+  pwdhash VARCHAR(132) NOT NULL,
 
   PRIMARY KEY(id),
   UNIQUE(username)
