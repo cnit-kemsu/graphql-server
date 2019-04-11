@@ -14,3 +14,25 @@ CREATE TABLE users (
   UNIQUE(username)
 
 );
+
+CREATE TABLE roles (
+
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+  name VARCHAR(50) NOT NULL,
+
+  PRIMARY KEY(id),
+  UNIQUE(name)
+
+);
+
+CREATE TABLE user_roles (
+
+  user_id INT UNSIGNED NOT NULL,
+  role_id INT UNSIGNED NOT NULL,
+
+  PRIMARY KEY(user_id, role_id),
+  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE ON UPDATE CASCADE
+
+);

@@ -1,6 +1,7 @@
 import graphqlFields from 'graphql-fields';
 
 function colAsField([field, column]) {
+  if (field === column) return column;
   return column + ' ' + field;
 }
 
@@ -62,10 +63,11 @@ export class Mapping {
 
   assignColumn([name]) {
     const column = this.fieldsMapping[name];
-    return column === undefined
+    return (
+      column === undefined
       ? name
       : column
-      + ' = ?';
+    ) + ' = ?';
   }
 
   toColumns(resolveInfo) {
@@ -89,4 +91,8 @@ export class Mapping {
       #.map(toParam)
     ] || [ '', [] ];
   }
+}
+
+export function jsonArray(cols) {
+  return `CONCAT('[', GROUP_CONCAT(${cols} SEPARATOR ', '), ']')`;
 }

@@ -1,7 +1,8 @@
-import * as _ from '../../src/graphql-types';
-import { Mapping } from '../../src/Mapping';
-import { hashPassword } from '../../src/pwdhash';
-import { NestedType } from './nested';
+import * as _ from '../../../src/graphql-types';
+import { Mapping, jsonArray } from '../../../src/Mapping';
+import { hashPassword } from '../../../src/pwdhash';
+import { RoleType } from './roles';
+import { authorize } from '../../../src/authorize';
 
 async function wait(time) {
   await new Promise(resolve => {
@@ -12,29 +13,29 @@ async function wait(time) {
 const { toColumns, toFilter, toAssignment } = new Mapping({
   id: 'id',
   username: 'username',
-  email: 'email'
+  email: 'email',
+  roles: {
+    id: 'id',
+    roleKeys: `(SELECT ${jsonArray('role_id')} FROM user_roles WHERE user_id = id)`
+  }
 }, {
   idIn: idArray => `id IN (${idArray})`,
   username: 'username = ?'
 });
 
-
-
 const UserType = new _.Object({
   name: 'User',
-  fields: () => ({
+  fields: {
     id: { type: new _.NonNull(_.Int) },
     username: { type: new _.NonNull(_.String) },
     email: { type: _.String },
-    nested: {
-      type: NestedType,
-      resolve(obj, {}, {}, info) {
-        return {
-          first: 'lalala'
-        };
+    roles: {
+      type: new _.List(RoleType),
+      resolve({ roleKeys }, {}, { roleByKey }, info) {
+        return roleByKey.loadMany(JSON.parse(roleKeys), info);
       }
     }
-  })
+  }
 });
 
 const searchArgs = {
@@ -51,6 +52,7 @@ const users = {
     ...searchArgs
   },
   resolve(obj, { limit = 10, offset = 0, ...search }, { db, user }, info) {
+    authorize(user);
     const cols = toColumns(info);
     const [filter, params] = toFilter(search);
     return db.query(`SELECT ${cols} FROM users ${filter} LIMIT ? OFFSET ?`, [ ...params, limit, offset ]);
@@ -112,10 +114,10 @@ const deleteUser = {
 };
 
 export default [{
-    users,
-    totalUsers
-  }, {
-    createUser,
-    updateUser,
-    deleteUser
-  }];
+  users,
+  totalUsers
+}, {
+  createUser,
+  updateUser,
+  deleteUser
+}];

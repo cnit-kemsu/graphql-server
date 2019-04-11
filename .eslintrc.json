@@ -39,7 +39,7 @@
     "no-obj-calls": "off",
     "no-prototype-builtins": "warn",
     "no-regex-spaces": "warn",
-    "no-sparse-arrays": "warn",
+    "no-sparse-arrays": "off",
     "no-template-curly-in-string": "warn",
     "no-unexpected-multiline": "off",
     "no-unreachable": "warn",

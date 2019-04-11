@@ -1,10 +1,20 @@
 import jwt from 'jsonwebtoken';
-import * as _ from '../../src/graphql-types';
-import { jwtSecret } from './config.js';
-import { verifyPassword } from '../../src/pwdhash';
+import * as _ from '../../../src/graphql-types';
+import { jwtSecret } from '../config.js';
+import { verifyPassword } from '../../../src/pwdhash';
+
+const TokenType = new _.Object({
+  name: 'BearerToken',
+  fields: {
+    id: { type: new _.NonNull(_.Int) },
+    username: { type: new _.NonNull(_.String) },
+    email: { type: _.String },
+    bearer: { type: _.String }
+  }
+});
 
 const signIn = {
-  type: _.JSON,
+  type: TokenType,
   args: {
     login: { type: _.String },
     password: { type: _.String }

@@ -9,7 +9,7 @@ export default {
   cache: true,
   target: 'web',
 
-  entry: './test/app.js',
+  entry: './test/App.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].js',
