@@ -4,7 +4,7 @@ import mariadb from 'mariadb';
 import { hashPassword } from '../../src/pwdhash';
 import { dbConfig, superUser } from './config.js';
 
-const dbSchema = path.resolve(__dirname, './db_schema.sql')
+const dbSchema = path.resolve(__dirname, './schema.sql')
   |> fs.readFileSync(#).toString();
   
 const pool = mariadb.createPool({

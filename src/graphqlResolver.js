@@ -1,6 +1,8 @@
 import graphqlHTTP from 'express-graphql';
 import mariadb from 'mariadb';
 
+import { formatGraphQLError } from './error-logging/formatGraphqlError';
+
 function bindLoaders(loaders, context) {
   for (const [name, loader] of Object.entries(loaders)) {
     context[name] = loader.bind(context);
@@ -23,7 +25,7 @@ export function graphqlResolver(dbConfig, schema, loaders) {
         extensions() {
           if (db !== undefined) db.end();
         },
-        //formatError:
+        formatError: formatGraphQLError
     };
   };
   return graphqlHTTP(options);
