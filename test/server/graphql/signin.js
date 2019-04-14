@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
-import * as _ from '../../../src/graphql-types';
+import * as _ from '../../../src/graphql/types';
 import { jwtSecret } from '../config.js';
-import { verifyPassword } from '../../../src/pwdhash';
+import { verifyPassword } from '../../../src/auth/pwdhash';
 
 const TokenType = new _.Object({
   name: 'BearerToken',

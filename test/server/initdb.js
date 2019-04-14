@@ -9,6 +9,7 @@ const dbSchema = path.resolve(__dirname, './schema.sql')
   
 const pool = mariadb.createPool({
   ...dbConfig,
+  database: undefined,
   multipleStatements: true
 });
 

@@ -1,8 +1,8 @@
-import * as _ from '../../../src/graphql-types';
-import { Mapping, jsonArray } from '../../../src/Mapping';
-import { hashPassword } from '../../../src/pwdhash';
+import * as _ from '../../../src/graphql/types';
+import { Mapping, jsonArray } from '../../../src/graphql/Mapping';
+import { hashPassword } from '../../../src/auth/pwdhash';
 import { RoleType } from './roles';
-import { authorize } from '../../../src/authorize';
+import { authorize } from '../../../src/graphql/authorize';
 
 async function wait(time) {
   await new Promise(resolve => {
@@ -62,9 +62,10 @@ const users = {
 const totalUsers = {
   type: _.Int,
   args: searchArgs,
-  resolve(obj, search, { db }) {
+  async resolve(obj, search, { db }) {
     const [filter, params] = toFilter(search);
-    return db.query(`SELECT COUNT(*) FROM users ${filter}`, params);
+    return await db.query(`SELECT COUNT(*) count FROM users ${filter}`, params)
+      |> #.count;
   }
 };
 

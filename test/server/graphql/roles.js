@@ -1,6 +1,6 @@
-import * as _ from '../../../src/graphql-types';
-import { Mapping } from '../../../src/Mapping';
-import { Loader } from '../../../src/Loader';
+import * as _ from '../../../src/graphql/types';
+import { Mapping } from '../../../src/graphql/Mapping';
+import { Loader } from '../../../src/graphql/Loader';
 
 const { toColumns, toFilter, toAssignment } = new Mapping({}, {
   keys: idArray => `id IN (${idArray})`,

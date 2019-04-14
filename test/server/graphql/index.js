@@ -1,4 +1,4 @@
-import { compose } from '../../../src/compose';
+import { compose } from '../../../src/graphql/compose';
 import signin from './signin';
 import users from './users';
 import roles from './roles';
