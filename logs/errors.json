@@ -350,4 +350,109 @@
    }
   }
  }
+}, {
+ "time": "4/15/2019, 2:11:51 PM",
+ "cause": {
+  "PublicError": {
+   "message": "Database connection failed",
+   "clientInfo": "TECHNICAL_ISSUE",
+   "stack": [
+    "Pool.getConnection (src/database.js:49:13)"
+   ],
+   "name": "PublicError",
+   "rootCause": {
+    "name": "SqlError",
+    "message": "Access denied for user 'root'@'localhost' (using password: YES)",
+    "stack": [
+     "Pool.getConnection (src/database.js:50:51)"
+    ]
+   }
+  }
+ }
+}, {
+ "time": "4/15/2019, 2:11:51 PM",
+ "cause": {
+  "PublicError": {
+   "message": "Database connection failed",
+   "clientInfo": "TECHNICAL_ISSUE",
+   "stack": [
+    "Pool.getConnection (src/database.js:49:13)"
+   ],
+   "name": "PublicError",
+   "rootCause": {
+    "name": "SqlError",
+    "message": "Access denied for user 'root'@'localhost' (using password: YES)",
+    "stack": [
+     "Pool.getConnection (src/database.js:50:51)"
+    ]
+   }
+  }
+ }
+}, {
+ "time": "4/15/2019, 4:56:28 PM",
+ "cause": {
+  "name": "Error",
+  "message": "Expected error",
+  "stack": [
+   "app.use (test/server/App.js:35:9)",
+   "next (src/auth/userInfo.js:17:7)"
+  ]
+ }
+}, {
+ "time": "4/15/2019, 4:56:34 PM",
+ "cause": {
+  "name": "Error",
+  "message": "Expected error",
+  "stack": [
+   "app.use (test/server/App.js:35:9)",
+   "next (src/auth/userInfo.js:17:7)"
+  ]
+ }
+}, {
+ "time": "4/15/2019, 4:57:02 PM",
+ "cause": {
+  "message": "Expected public error",
+  "clientInfo": "Do nothing",
+  "stack": [
+   "app.use (test/server/App.js:40:11)",
+   "next (src/auth/userInfo.js:17:7)"
+  ],
+  "rootCause": {
+   "name": "Error",
+   "message": "Expected error"
+  }
+ }
+}, {
+ "time": "4/15/2019, 4:57:45 PM",
+ "cause": {
+  "message": "Querying database failed",
+  "clientInfo": "UNEXPECTED_EXCEPTION",
+  "stack": [
+   "Connection.query (src/database/Connection.js:17:13)"
+  ],
+  "rootCause": {
+   "name": "SqlError",
+   "message": "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'SELECT1 id, username FROM users  LIMIT 10 OFFSET 0' at line 1",
+   "code": "ER_PARSE_ERROR",
+   "sql": "SELECT1 id, username FROM users  LIMIT ? OFFSET ?",
+   "params": [
+    10,
+    0
+   ]
+  }
+ }
+}, {
+ "time": "4/15/2019, 4:58:18 PM",
+ "cause": {
+  "message": "Expected public error",
+  "clientInfo": "Do nothing",
+  "stack": [
+   "app.use (test/server/App.js:40:11)",
+   "next (src/auth/userInfo.js:17:7)"
+  ],
+  "rootCause": {
+   "name": "Error",
+   "message": "Expected error"
+  }
+ }
 }]

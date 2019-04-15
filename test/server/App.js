@@ -6,16 +6,30 @@ import { schema, loaders } from './graphql';
 import { errorLogger } from '../../src/error/errorLogger';
 import { handleUncaughtErrors } from '../../src/error/handleUncaughtErrors';
 import { PublicError } from '../../src/error/PublicError';
+import { Pool } from '../../src/database/Pool';
 
-//process.env.NODE_ENV = 'production';
-process.env.NODE_ENV = 'development';
+process.env.NODE_ENV = 'production';
+//process.env.NODE_ENV = 'development';
 
-handleUncaughtErrors();
+if (process.env.NODE_ENV === 'production') handleUncaughtErrors();
 
 const app = express();
 
-app.use(userInfo(jwtSecret));
-app.use('/graphql', graphqlResolver(dbConfig, schema, loaders));
+userInfo(jwtSecret)
+  |> app.use(#);
+
+const pool = new Pool(dbConfig);
+async function graphqlOptions({ user }) {
+  const db = await pool.getConnection();
+  return [{
+    user,
+    db
+  }, function() {
+    if (db !== undefined) db.end();
+  }];
+}
+graphqlResolver(schema, loaders, graphqlOptions)
+  |> app.use('/graphql', #);
 
 app.use('/error', () => {
   //throw new Error('Expected error');

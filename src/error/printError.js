@@ -1,4 +1,17 @@
+function addSpaceToLine(line) {
+  return ' ' + line;
+}
+
+export function addSpaces(text) {
+  return text.split('\n').map(addSpaceToLine).join('\n');
+}
+
+function printProp([key, value]) {
+  return key + ': '
+  + JSON.stringify(value, null, ' ')
+  + '\n';
+}
+
 export function printError(error) {
-  return Object.keys(error)[0] + ': '
-    + JSON.stringify(Object.values(error)[0], null, ' ');
+  return Object.entries(error).map(printProp).join('');
 }

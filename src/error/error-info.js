@@ -6,11 +6,9 @@ function rootCauseInfo(error) {
   const { message, stack, name, ...props } = error;
   return {
     rootCause: {
-      [name]: {
-        message,
-        stack: prettifyStack(stack),
-        ...props
-      }
+      name,
+      message,
+      ...props
     }
   };
 } 
@@ -18,24 +16,22 @@ function rootCauseInfo(error) {
 export function privateInfo(error) {
   
   if (error instanceof PublicError) {
-    const { message, stack, clientInfo, rootCause } = error;
+    const { name, message, stack, clientInfo, rootCause, ...props } = error;
     return {
-      PublicError: {
-        message,
-        clientInfo,
-        stack: prettifyStack(stack),
-        ...rootCauseInfo(rootCause)
-      }
+      message,
+      clientInfo,
+      stack: prettifyStack(stack),
+      ...props,
+      ...rootCauseInfo(rootCause)
     };
   }
 
   const { name, message, stack, ...props } = error;
   return {
-    [name]: {
-      message,
-      stack: prettifyStack(stack),
-      ...props
-    }
+    name,
+    message,
+    stack: prettifyStack(stack),
+    ...props
   };
 }
 
@@ -45,12 +41,10 @@ export function publicInfo(error) {
   ) return privateInfo(error);
 
   if (error instanceof PublicError) {
-    const { message, clientInfo } = error;
+    const { name, message, clientInfo } = error;
     return {
-      PublicError: {
-        message,
-        clientInfo
-      }
+      message,
+      clientInfo
     };
   }
 

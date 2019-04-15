@@ -24,7 +24,7 @@ const addRole = {
         error, (
           error.message.includes('user_roles_ibfk_1')
           ? 'Role' : 'User'
-        ) + " doesn't exist", 'Unmet constraint'
+        ) + " doesn't exists", 'Unmet constraint'
       );
       throw error;
     }
