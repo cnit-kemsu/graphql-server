@@ -55,7 +55,7 @@ const users = {
     authorize(user);
     const cols = toColumns(info);
     const [filter, params] = toFilter(search);
-    return db.query(`SELECT1 ${cols} FROM users ${filter} LIMIT ? OFFSET ?`, [ ...params, limit, offset ]);
+    return db.query(`SELECT ${cols} FROM users ${filter} LIMIT ? OFFSET ?`, [ ...params, limit, offset ]);
   }
 };
 

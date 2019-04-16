@@ -455,4 +455,42 @@
    "message": "Expected error"
   }
  }
+}, {
+ "time": "4/16/2019, 9:20:59 AM",
+ "cause": {
+  "message": "Querying database failed",
+  "clientInfo": "UNEXPECTED_EXCEPTION",
+  "stack": [
+   "Connection.query (src/database/Connection.js:17:13)"
+  ],
+  "rootCause": {
+   "name": "SqlError",
+   "message": "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'SELECT1 id, username FROM users  LIMIT 1 OFFSET 0' at line 1",
+   "code": "ER_PARSE_ERROR",
+   "sql": "SELECT1 id, username FROM users  LIMIT ? OFFSET ?",
+   "params": [
+    1,
+    0
+   ]
+  }
+ }
+}, {
+ "time": "4/16/2019, 9:21:27 AM",
+ "cause": {
+  "message": "Querying database failed",
+  "clientInfo": "UNEXPECTED_EXCEPTION",
+  "stack": [
+   "Connection.query (src/database/Connection.js:17:13)"
+  ],
+  "rootCause": {
+   "name": "SqlError",
+   "message": "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'SELECT1 id, username FROM users  LIMIT 10 OFFSET 0' at line 1",
+   "code": "ER_PARSE_ERROR",
+   "sql": "SELECT1 id, username FROM users  LIMIT ? OFFSET ?",
+   "params": [
+    10,
+    0
+   ]
+  }
+ }
 }]

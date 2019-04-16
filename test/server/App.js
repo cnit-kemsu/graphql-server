@@ -8,8 +8,11 @@ import { handleUncaughtErrors } from '../../src/error/handleUncaughtErrors';
 import { PublicError } from '../../src/error/PublicError';
 import { Pool } from '../../src/database/Pool';
 
-process.env.NODE_ENV = 'production';
-//process.env.NODE_ENV = 'development';
+import multer from 'multer';
+const upload = multer();
+
+//process.env.NODE_ENV = 'production';
+process.env.NODE_ENV = 'development';
 
 if (process.env.NODE_ENV === 'production') handleUncaughtErrors();
 
@@ -29,7 +32,7 @@ async function graphqlOptions({ user }) {
   }];
 }
 graphqlResolver(schema, loaders, graphqlOptions)
-  |> app.use('/graphql', #);
+  |> app.use('/graphql', upload.none(), #);
 
 app.use('/error', () => {
   //throw new Error('Expected error');

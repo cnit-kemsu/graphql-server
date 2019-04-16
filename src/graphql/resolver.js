@@ -8,7 +8,6 @@ function sendError(originalError, responce) {
   });
 }
 
-
 export function graphqlResolver(schema, loaders, options) {
 
   const _this = {};
