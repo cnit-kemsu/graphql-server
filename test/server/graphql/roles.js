@@ -1,4 +1,4 @@
-import * as _ from '../../../src/graphql/types';
+import { types as _ } from '../../../index';
 import { Mapping } from '../../../src/graphql/Mapping';
 import { Loader } from '../../../src/graphql/Loader';
 

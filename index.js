@@ -1,4 +1,4 @@
-export { GraphqlClient } from '../src/classes/GraphqlClient';
-export { GraphqlProvider } from '../src/comps/GraphqlProvider';
-export { useQuery } from '../src/hooks/useQuery';
-export { useMutation } from '../src/hooks/useMutation';
+export * as types from './src/graphql/types';
+export { Mapping } from './src/graphql/Mapping';
+export { Loader } from './src/graphql/Loader';
+export { compose } from './src/graphql/compose';
