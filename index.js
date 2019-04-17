@@ -10,3 +10,4 @@ export { errorLogger } from './src/error/errorLogger';
 export { handleUncaughtErrors } from './src/error/handleUncaughtErrors';
 export { PublicError } from './src/error/PublicError';
 export { Pool } from './src/database/Pool';
+export { ClientInfo } from './src/error/ClientInfo';
