@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import * as _ from '../../../src/graphql/types';
+import { types as _ } from '../../../src/graphql/types';
 import { jwtSecret } from '../config.js';
 import { verifyPassword } from '../../../src/auth/pwdhash';
 

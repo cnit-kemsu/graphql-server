@@ -1,4 +1,4 @@
-import * as _ from '../../../src/graphql/types';
+import { types as _ } from '../../../src/graphql/types';
 import { Mapping, jsonArray } from '../../../src/graphql/Mapping';
 import { hashPassword } from '../../../src/auth/pwdhash';
 import { RoleType } from './roles';

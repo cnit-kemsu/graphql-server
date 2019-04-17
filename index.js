@@ -1,4 +1,4 @@
-export * as types from './src/graphql/types';
+export { types } from './src/graphql/types';
 export { Mapping, jsonArray } from './src/graphql/Mapping';
 export { Loader } from './src/graphql/Loader';
 export { compose } from './src/graphql/compose';

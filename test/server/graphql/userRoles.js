@@ -1,4 +1,4 @@
-import * as _ from '../../../src/graphql/types';
+import { types as _ } from '../../../src/graphql/types';
 import { Mapping } from '../../../src/graphql/Mapping';
 import { PublicError } from '../../../src/error/PublicError';
 
