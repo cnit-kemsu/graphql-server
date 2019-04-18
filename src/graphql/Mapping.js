@@ -76,10 +76,10 @@ export class Mapping {
     |> Object.entries(#).map(colAsField).join(', ');
   }
 
-  toFilter(filter = {}) {
+  toFilter(filter = {}, extra = []) {
     return Object.entries(filter)
-    |> #.length > 0 && [
-      #.map(this.toClause) |> 'WHERE ' + #.join(' AND '),
+    |> #.length + extra.length > 0 && [
+      [ ...#.map(this.toClause), ...extra ] |> 'WHERE ' + #.join(' AND '),
       #.reduce(toParams, [])
     ] || [ '', [] ];
   }
