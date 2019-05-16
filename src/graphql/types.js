@@ -14,6 +14,7 @@
 import {
   GraphQLNonNull as NonNull,
   GraphQLInt as Int,
+  GraphQLFloat as Float,
   GraphQLString as String,
   GraphQLObjectType as Object,
   GraphQLList as List,
@@ -27,6 +28,7 @@ import JSON from 'graphql-type-json';
 export const types = {
   NonNull,
   Int,
+  Float,
   String,
   Object,
   List,

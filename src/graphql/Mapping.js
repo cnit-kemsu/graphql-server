@@ -78,7 +78,7 @@ export class Mapping {
 
   toFilter(filter = {}, extra = []) {
     return Object.entries(filter)
-    |> #.length + extra.length > 0 && [
+    |> (#.length + extra.length) > 0 && [
       [ ...#.map(this.toClause), ...extra ] |> 'WHERE ' + #.join(' AND '),
       #.reduce(toParams, [])
     ] || [ '', [] ];
