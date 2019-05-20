@@ -1,11 +1,24 @@
 import DataLoader from 'dataloader';
 
-function collateByDefault(keyProp, array, keys) {
-  return keys.map(
-    key => array.find(
-      row => row[keyProp] === key
-    )
-  );
+export const collate = {
+  find(keyProp) {
+    return function (array, keys) {
+      return keys.map(
+        key => array.find(
+          row => row[keyProp] === key
+        )
+      );
+    }
+  },
+  filter(keyProp) {
+    return function (array, keys) {
+      return keys.map(
+        key => array.filter(
+          row => row[keyProp] === key
+        )
+      );
+    }
+  }
 }
 
 function excludeEqual(keys, key) {
@@ -35,7 +48,7 @@ class BoundLoader {
 
 export class Loader {
 
-  constructor(batchLoadFn, collation = 'id') {
+  constructor(batchLoadFn, collation = collate.find('id')) {
     this.load = batchLoadFn;
     this.collation = collation;
     this.batchLoadFn = this.batchLoadFn.bind(this);
@@ -49,8 +62,6 @@ export class Loader {
 
     return keys.reduce(excludeEqual, [])
     |> await this.load(#, context, resolveInfo)
-    |> typeof this.collation === 'string'
-      && collateByDefault(this.collation, #, keys)
-      || this.collation(#, keys);
+    |> this.collation(#, keys);
   }
 }

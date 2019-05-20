@@ -70,8 +70,9 @@ export class Mapping {
     ) + ' = ?';
   }
 
-  toColumns(resolveInfo) {
+  toColumns(resolveInfo, extra = {}) {
     return graphqlFields(resolveInfo)
+    |> { ...#, ...extra }
     |> Object.entries(#).reduce(this.toColumn, {})
     |> Object.entries(#).map(colAsField).join(', ');
   }
