@@ -2,7 +2,7 @@ import { logError } from '../error/logError';
 import { publicInfo } from '../error/error-info';
 import { GraphQLError } from './GraphQLError';
 
-export function formatError({ message, locations, path, originalError }) {
+export function customFormatErrorFn({ message, locations, path, originalError }) {
 
   let info;
   if (originalError === undefined) info = { message };

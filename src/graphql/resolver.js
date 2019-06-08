@@ -1,8 +1,8 @@
 import graphqlHTTP from 'express-graphql';
-import { formatError } from './formatError';
+import { customFormatErrorFn } from './formatError';
 
 function sendError(originalError, responce) {
-  formatError({ originalError })
+  customFormatErrorFn({ originalError })
   |> responce.json({
     errors: [#]
   });
@@ -23,7 +23,7 @@ export function graphqlResolver(schema, loaders, options) {
         schema,
         context,
         extensions,
-        formatError
+        customFormatErrorFn
       };
 
     } catch (error) {
