@@ -16,7 +16,7 @@ function nonUndefined([, value]) {
 }
 
 function toParam([, value]) {
-  return value;
+  return value instanceof Array ? value[1] : value;
 }
 
 export class Mapping {
@@ -61,13 +61,17 @@ export class Mapping {
       : clause;
   }
 
-  assignColumn([name]) {
+  assignColumn([name, value]) {
     const column = this.fieldsMapping[name];
     return (
       column === undefined
       ? name
       : column
-    ) + ' = ?';
+    ) + ' = ' + (
+      value instanceof Array
+      ? value[0]
+      : '?'
+    );
   }
 
   toColumns(resolveInfo, extra = {}) {
