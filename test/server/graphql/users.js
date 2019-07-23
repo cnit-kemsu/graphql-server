@@ -1,5 +1,6 @@
 import { types as _ } from '../../../src/graphql/types';
 import { Mapping, jsonArray } from '../../../src/graphql/Mapping';
+import { getFiles } from '../../../src/graphql/getFiles';
 import { hashPassword } from '../../../src/auth/pwdhash';
 import { RoleType } from './roles';
 import { authorize } from '../../../src/graphql/authorize';
@@ -14,6 +15,7 @@ const { toColumns, toFilter, toAssignment } = new Mapping({
   id: 'id',
   username: 'username',
   email: 'email',
+  file: 'file_txt',
   roles: {
     id: 'id',
     roleKeys: `(SELECT ${jsonArray('role_id')} FROM user_roles WHERE user_id = id)`
@@ -76,11 +78,15 @@ const createUser = {
     email: { type: _.String },
     password: { type: new _.NonNull(_.String) }
   },
-  async resolve(obj, { password, ...input }, { db }) {
-    await wait(2000);
+  async resolve(obj, { password, ...input }, { db, files }, info) {
+    //await wait(2000);
+
+    const { file, email } = getFiles(files, ['email'], info);
+
     const [assignment, params] = toAssignment({
       pwdhash: hashPassword(password),
-      ...input
+      ...input,
+      file: file?.buffer
     });
     return await db.query(`INSERT INTO users ${assignment}`, params)
       |> #.insertId;

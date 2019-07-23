@@ -31,8 +31,17 @@ async function graphqlOptions({ user }) {
     if (db !== undefined) db.end();
   }];
 }
+
+app.use('/file', async (req, res) => {
+  const db = await pool.getConnection();
+  res.writeHead(200, {'Content-Type': 'image/png' });
+  const result = await db.query(`SELECT file_txt FROM users WHERE id = ?`, 10);
+  res.end(result[0].file_txt, 'binary');
+  db.end();
+});
+
 graphqlResolver(schema, loaders, graphqlOptions)
-  |> app.use('/graphql', upload.none(), #);
+  |> app.use('/graphql', upload.any(), #);
 
 app.use('/error', () => {
   //throw new Error('Expected error');

@@ -8,6 +8,16 @@ function sendError(originalError, responce) {
   });
 }
 
+function toContextFiles({ mimetype, buffer, fieldname }) {
+  const [key, ...pathArray] = fieldname.split('.');
+  return {
+    mimetype,
+    buffer,
+    key,
+    pathArray
+  };
+}
+
 export function graphqlResolver(schema, loaders, options) {
 
   const _this = {};
@@ -19,6 +29,9 @@ export function graphqlResolver(schema, loaders, options) {
       for (const [name, loader] of Object.entries(loaders)) {
         context[name] = loader.bind(context);
       }
+
+      context.files = request.files.map(toContextFiles);
+
       return {
         schema,
         context,
