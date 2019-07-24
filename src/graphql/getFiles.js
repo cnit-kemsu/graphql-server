@@ -1,8 +1,18 @@
+function propNameToPathUnit(propName) {
+  return isNaN(propName)
+    ? '.' + propName
+    : '[' + propName + ']';
+}
+
+function arrayToPath(pathArray) {
+  return pathArray.map(propNameToPathUnit).join('');
+}
+
 function toArgFile({ mimetype, buffer, pathArray: [, ...pathArray] }) {
   return {
     mimetype,
     buffer,
-    path: pathArray.join('.')
+    path: arrayToPath(pathArray)
   };
 }
 
