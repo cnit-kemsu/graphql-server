@@ -1,6 +1,6 @@
 export { types } from './src/graphql/types';
 export { Mapping, jsonArray } from './src/graphql/Mapping';
-export { getFiles } from './src/graphql/getFiles';
+//export { getFiles } from './src/graphql/getFiles';
 export { Loader, collate } from './src/graphql/Loader';
 export { compose } from './src/graphql/compose';
 export { graphqlResolver } from './src/graphql/resolver';
