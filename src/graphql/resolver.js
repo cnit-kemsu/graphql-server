@@ -40,7 +40,7 @@ function createFileProperty(tragetObject, { fieldname, mimetype, buffer }) {
 
 function createFilesObject(files) {
   const filesObject = {};
-  for (const file of files) createFileProperty(filesObject, file);
+  if (files != null) for (const file of files) createFileProperty(filesObject, file);
   return filesObject;
 }
 
