@@ -8,19 +8,44 @@ function sendError(originalError, responce) {
   });
 }
 
-function toContextFiles({ mimetype, buffer, fieldname }) {
-  const [key, ...pathArray] = fieldname.split('.');
-  return {
+// function toContextFiles({ mimetype, buffer, fieldname }) {
+//   const [key, ...pathArray] = fieldname.split('.');
+//   return {
+//     mimetype,
+//     buffer,
+//     key,
+//     pathArray
+//   };
+// }
+
+function createFileProperty(tragetObject, { fieldname, mimetype, buffer }) {
+  
+  const pathArray = fieldname.split('.');
+  let tragetProp = tragetObject,
+    nextPropName = pathArray[0], currentPropName;
+  for (let index = 0; index < pathArray.length - 1; index++) {
+    currentPropName = nextPropName;
+    nextPropName = pathArray[index + 1];
+    if (tragetProp[currentPropName] == null) {
+      if (isNaN(nextPropName)) tragetProp[currentPropName] = {};
+      else tragetProp[currentPropName] = [];
+    }
+    tragetProp = tragetProp[currentPropName];
+  }
+  tragetProp[nextPropName] = {
     mimetype,
-    buffer,
-    key,
-    pathArray
+    buffer
   };
+}
+
+function createFilesObject(files) {
+  const filesObject = {};
+  for (const file of files) createFileProperty(filesObject, file);
+  return filesObject;
 }
 
 export function graphqlResolver(schema, loaders, options) {
 
-  const _this = {};
   const _options = async function(request, responce) {
 
     try {
@@ -30,7 +55,8 @@ export function graphqlResolver(schema, loaders, options) {
         context[name] = loader.bind(context);
       }
 
-      context.files = request.files.map(toContextFiles);
+      //context.files = request.files.map(toContextFiles);
+      context.files = createFilesObject(request.files);
 
       return {
         schema,
@@ -40,35 +66,74 @@ export function graphqlResolver(schema, loaders, options) {
       };
 
     } catch (error) {
-
       sendError(error, responce);
-      _this.responce.setHeader = () => undefined;
-      //_this.responce.json = undefined;
-      _this.responce.end = () => undefined;
-      _this.end();
-      //_this.next();
     }
     
   };
   const graphqlMiddleware = graphqlHTTP(_options);
 
-  return async function (request, responce, next) {
-
-    _this.next = next;
-    _this.responce = responce;
-    _this.setHeader = responce.setHeader;
-    //_this.json = responce.json;
-    _this.end = responce.end;
+  return async function (request, responce) {
 
     try {
-      await graphqlMiddleware(request, _this.responce);
+      await graphqlMiddleware(request, responce);
     } catch(error) {
       sendError(error, responce);
-    } finally {
-      _this.responce.setHeader = _this.setHeader;
-      //_this.responce.json = _this.json;
-      _this.responce.end = _this.end;
     }
   };
 
 }
+
+// export function graphqlResolver(schema, loaders, options) {
+
+//   const _this = {};
+//   const _options = async function(request, responce) {
+
+//     try {
+
+//       const [context, extensions] = await options(request);
+//       for (const [name, loader] of Object.entries(loaders)) {
+//         context[name] = loader.bind(context);
+//       }
+
+//       context.files = request.files.map(toContextFiles);
+
+//       return {
+//         schema,
+//         context,
+//         extensions,
+//         customFormatErrorFn
+//       };
+
+//     } catch (error) {
+
+//       sendError(error, responce);
+//       _this.responce.setHeader = () => undefined;
+//       //_this.responce.json = undefined;
+//       _this.responce.end = () => undefined;
+//       _this.end();
+//       //_this.next();
+//     }
+    
+//   };
+//   const graphqlMiddleware = graphqlHTTP(_options);
+
+//   return async function (request, responce, next) {
+
+//     _this.next = next;
+//     _this.responce = responce;
+//     _this.setHeader = responce.setHeader;
+//     //_this.json = responce.json;
+//     _this.end = responce.end;
+
+//     try {
+//       await graphqlMiddleware(request, _this.responce);
+//     } catch(error) {
+//       sendError(error, responce);
+//     } finally {
+//       _this.responce.setHeader = _this.setHeader;
+//       //_this.responce.json = _this.json;
+//       _this.responce.end = _this.end;
+//     }
+//   };
+
+// }

@@ -1,6 +1,6 @@
 import { types as _ } from '../../../src/graphql/types';
 import { Mapping, jsonArray } from '../../../src/graphql/Mapping';
-import { getFiles } from '../../../src/graphql/getFiles';
+//import { getFiles } from '../../../src/graphql/getFiles';
 import { hashPassword } from '../../../src/auth/pwdhash';
 import { RoleType } from './roles';
 import { authorize } from '../../../src/graphql/authorize';
@@ -78,10 +78,10 @@ const createUser = {
     email: { type: _.String },
     password: { type: new _.NonNull(_.String) }
   },
-  async resolve(obj, { password, ...input }, { db, files }, info) {
+  async resolve(obj, { password, ...input }, { db, files: { file } }, info) {
     //await wait(2000);
 
-    const { file, email } = getFiles(files, ['email'], info);
+    //const { file, email } = getFiles(files, ['email'], info);
 
     const [assignment, params] = toAssignment({
       pwdhash: hashPassword(password),
