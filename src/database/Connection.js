@@ -22,14 +22,14 @@ export class Connection {
     }
   }
 
-  beginTransaction() {
-    return this.db.beginTransaction();
+  async beginTransaction() {
+    await this.db.beginTransaction();
   }
-  commit() {
-    return this.db.commit();
+  async commit() {
+    await this.db.commit();
   }
-  rollback() {
-    return this.db.rollback();
+  async rollback() {
+    await this.db.rollback();
   }
 
   end() {
