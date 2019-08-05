@@ -22,6 +22,16 @@ export class Connection {
     }
   }
 
+  beginTransaction() {
+    return this.db.beginTransaction();
+  }
+  commit() {
+    return this.db.commit();
+  }
+  rollback() {
+    return this.db.rollback();
+  }
+
   end() {
     this.db.end();
   }
