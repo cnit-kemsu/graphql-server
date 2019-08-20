@@ -76,9 +76,10 @@ const createUser = {
   args: {
     username: { type: new _.NonNull(_.String) },
     email: { type: _.String },
-    password: { type: new _.NonNull(_.String) }
+    password: { type: new _.NonNull(_.String) },
+    file: { type: _.JSON }
   },
-  async resolve(obj, { password, ...input }, { db, files: { file } }, info) {
+  async resolve(obj, { password, file, ...input }, { db }, info) {
     //await wait(2000);
 
     //const { file, email } = getFiles(files, ['email'], info);
