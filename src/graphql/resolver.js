@@ -45,7 +45,10 @@ function sendError(originalError, responce) {
 // }
 
 function assignFiles(value, files) {
-    if (typeof value === 'string' && value.substring(0, 11) === 'blob_index=') return files[value.substring(11)];
+    if (typeof value === 'string' && value.substring(0, 11) === 'blob_index=') {
+      const { mimetype, buffer } = files[value.substring(11)];
+      return { mimetype, buffer };
+    };
     if (value instanceof Object) for (const key in value) value[key] = assignFiles(value[key], files);
     return value;
 }
