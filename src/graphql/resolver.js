@@ -18,6 +18,7 @@ function assignFiles(value, blobsMap, files) {
     }
     _value[blobKeyPath[lastIndex]] = { mimetype, buffer };
   }
+  return value;
 }
 
 export function graphqlResolver(schema, loaders, options) {
