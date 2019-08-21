@@ -8,49 +8,16 @@ function sendError(originalError, responce) {
   });
 }
 
-// function toContextFiles({ mimetype, buffer, fieldname }) {
-//   const [key, ...pathArray] = fieldname.split('.');
-//   return {
-//     mimetype,
-//     buffer,
-//     key,
-//     pathArray
-//   };
-// }
-
-// function createFileProperty(tragetObject, { fieldname, mimetype, buffer }) {
-  
-//   const pathArray = fieldname.split('.');
-//   let tragetProp = tragetObject,
-//     nextPropName = pathArray[0], currentPropName;
-//   for (let index = 0; index < pathArray.length - 1; index++) {
-//     currentPropName = nextPropName;
-//     nextPropName = pathArray[index + 1];
-//     if (tragetProp[currentPropName] == null) {
-//       if (isNaN(nextPropName)) tragetProp[currentPropName] = {};
-//       else tragetProp[currentPropName] = [];
-//     }
-//     tragetProp = tragetProp[currentPropName];
-//   }
-//   tragetProp[nextPropName] = {
-//     mimetype,
-//     buffer
-//   };
-// }
-
-// function createFilesObject(files) {
-//   const filesObject = {};
-//   if (files != null) for (const file of files) createFileProperty(filesObject, file);
-//   return filesObject;
-// }
-
-function assignFiles(value, files) {
-    if (typeof value === 'string' && value.substring(0, 11) === 'blob_index=') {
-      const { mimetype, buffer } = files[value.substring(11)];
-      return { mimetype, buffer };
-    };
-    if (value instanceof Object) for (const key in value) value[key] = assignFiles(value[key], files);
-    return value;
+function assignFiles(value, blobsMap, files) {
+  for (let blobIndex = 0; blobIndex < blobsMap.length; blobIndex++) for (const blobKeyPath of blobsMap[blobIndex]) {
+    const { mimetype, buffer } = files[blobIndex];
+    let _value = value;
+    const lastIndex = blobKeyPath.length - 1;
+    for (let index = 0; index < lastIndex; index++) {
+      _value = _value[blobKeyPath[index]];
+    }
+    _value[blobKeyPath[lastIndex]] = { mimetype, buffer };
+  }
 }
 
 export function graphqlResolver(schema, loaders, options) {
@@ -63,9 +30,6 @@ export function graphqlResolver(schema, loaders, options) {
       for (const [name, loader] of Object.entries(loaders)) {
         context[name] = loader.bind(context);
       }
-
-      //context.files = request.files.map(toContextFiles);
-      //context.files = createFilesObject(request.files);
 
       return {
         schema,
@@ -85,7 +49,8 @@ export function graphqlResolver(schema, loaders, options) {
 
     try {
       let variables = JSON.parse(request.body.variables);
-      variables = assignFiles(variables, request.files);
+      const blobsMap = JSON.parse(request.body.blobsMap);
+      variables = assignFiles(variables, blobsMap, request.files);
       request.body.variables = variables;
       await graphqlMiddleware(request, responce);
     } catch(error) {
