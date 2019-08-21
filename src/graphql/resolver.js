@@ -8,6 +8,34 @@ function sendError(originalError, responce) {
   });
 }
 
+export class FileInsert {
+  constructor(mimetype, buffer) {
+    this._mimetype = mimetype;
+    this._buffer = buffer;
+  }
+
+  pushToStore(files) {
+    this.filesStore = files;
+    this.fileIndex = files.findIndex(file => file === this);
+    if (this.fileIndex === -1) {
+      files.push(this);
+      this.fileIndex = files.length - 1;
+    }
+  }
+
+  getInsertId(insertIdArray) {
+    return insertIdArray[this.fileIndex];
+  }
+
+  get mimetype() {
+    return this._mimetype;
+  }
+
+  get buffer() {
+    return this._buffer;
+  }
+}
+
 function assignFiles(value, blobsMap, files) {
   for (let blobIndex = 0; blobIndex < blobsMap.length; blobIndex++) for (const blobKeyPath of blobsMap[blobIndex]) {
     const { mimetype, buffer } = files[blobIndex];
@@ -16,7 +44,7 @@ function assignFiles(value, blobsMap, files) {
     for (let index = 0; index < lastIndex; index++) {
       _value = _value[blobKeyPath[index]];
     }
-    _value[blobKeyPath[lastIndex]] = { mimetype, buffer };
+    _value[blobKeyPath[lastIndex]] = new FileInsert(mimetype, buffer);
   }
   return value;
 }
