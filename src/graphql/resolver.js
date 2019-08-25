@@ -77,8 +77,8 @@ export function graphqlResolver(schema, loaders, options) {
   return async function (request, responce) {
 
     try {
-      let variables = JSON.parse(request.body.variables);
-      const blobsMap = JSON.parse(request.body.blobsMap);
+      let variables = request.body.variables ? JSON.parse(request.body.variables) : {};
+      const blobsMap = request.body.blobsMap ? JSON.parse(request.body.blobsMap) : [];
       variables = assignFiles(variables, blobsMap, request.files);
       request.body.variables = variables;
       await graphqlMiddleware(request, responce);
