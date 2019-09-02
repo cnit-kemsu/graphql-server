@@ -34,12 +34,15 @@ export class Mapping {
     this.toAssignment = this.toAssignment.bind(this);
   }
 
-  toColumn(cols, [name, subfields]) {
+  toColumn(cols, [name, subfields], vars) {
     const column = this.fieldsMapping[name];
     return column !== undefined ? (
-      typeof column === 'object'
-      ? { ...cols, ...column }
-      : { ...cols, [name]: column }
+      typeof column === 'function'
+      ? { ...cols, [name]: column(vars) } : (
+        typeof column === 'object'
+        ? { ...cols, ...column }
+        : { ...cols, [name]: column }
+      )
     ) : (
       Object.keys(subfields).length === 0
       ? { ...cols, [name]: name }
@@ -74,10 +77,11 @@ export class Mapping {
     );
   }
 
-  toColumns(resolveInfo, extra = {}) {
+  toColumns(resolveInfo, extra = {}, vars) {
+    const _toColumn = (p1, p2) => this.toColumn(p1, p2, vars);
     return graphqlFields(resolveInfo)
     |> { ...#, ...extra }
-    |> Object.entries(#).reduce(this.toColumn, {})
+    |> Object.entries(#).reduce(_toColumn, {})
     |> Object.entries(#).map(colAsField).join(', ');
   }
 
