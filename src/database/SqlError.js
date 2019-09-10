@@ -4,7 +4,7 @@ function removeBufferData(param) {
 }
 
 export class SqlError extends Error {
-  constructor(message, { params, props }) {
+  constructor(message, { params, ...props }) {
     super(message);
     Object.assign(this, props);
     this.name = 'SqlError';
