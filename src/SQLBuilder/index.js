@@ -1,10 +1,3 @@
-import graphqlFields from 'graphql-fields';
-
-function colAsField([field, column]) {
-  if (field === column) return column;
-  return column + ' ' + field;
-}
-
 function toParams(params, [, value]) {
   return Array.isArray(value)
   ? [ ...params, ...value ]
@@ -17,11 +10,6 @@ function nonUndefined([, value]) {
 
 function toParam([, value]) {
   return value instanceof Array ? value[1] : value;
-}
-
-function resolveSelectExpr(selectExprBuilder) {
-  if (selectExprBuilder?.constructor === Function)
-  if (selectExprBuilder?.constructor === Function && typeof selectExprBuilder === 'string') return selectExprBuilder;
 }
 
 function getClassNameOrType(value) {
@@ -169,6 +157,18 @@ export class SQLBuilder {
   }
 
   buildAssignmentList(input) {
+    const aliases = Object.keys(this.selectExprListBuilder);
+
+    let assignmentList = '';
+    let separator = ', ';
+
+    for (let index = 0; index < aliases.length; index++) {
+      const alias = aliases[index];
+      const value = input[alias];
+      if (value !== undefined) {
+
+      }
+    }
     return Object.entries(input).filter(nonUndefined)
     |> #.length > 0 && [
       'SET ' + #.map(this.assignColumn).join(', '),
