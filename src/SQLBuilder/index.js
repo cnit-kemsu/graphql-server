@@ -212,31 +212,31 @@ export function jsonArray(cols) {
 }
 
 
-const selectExprListBuilder = {
-  name: '_name',
-  surname: null,
-  email: 'email',
-  friendsKeys() { return '(SELECT id FROM friends WHERE person_1 = id)'; },
-  school: { schoolId: 'school_id', city: null },
-  city({ cityId = 1 }) { return [`(SELECT name FROM cities WHERE id = ?)`, cityId]; },
-};
+// const selectExprListBuilder = {
+//   name: '_name',
+//   surname: null,
+//   email: 'email',
+//   friendsKeys() { return '(SELECT id FROM friends WHERE person_1 = id)'; },
+//   school: { schoolId: 'school_id', city: null },
+//   city({ cityId = 1 }) { return [`(SELECT name FROM cities WHERE id = ?)`, cityId]; },
+// };
 
-const whereConditionBuilder = {
-  name: '_name',
-  surname: null,
-  cityId({ cityId = 1 }) { return [`city_id != ?`, cityId]; },
-};
+// const whereConditionBuilder = {
+//   name: '_name',
+//   surname: null,
+//   cityId({ cityId = 1 }) { return [`city_id != ?`, cityId]; },
+// };
 
-const assignmentListBuilder = {
-  name: '_name',
-  surname: null,
-  schoolId({ schoolId }) { return ['school_id = ?, city_id = (SELECT city_id FROM schools WHERE school_id = ?)', schoolId, schoolId]; }
-};
+// const assignmentListBuilder = {
+//   name: '_name',
+//   surname: null,
+//   schoolId({ schoolId }) { return ['school_id = ?, city_id = (SELECT city_id FROM schools WHERE school_id = ?)', schoolId, schoolId]; }
+// };
 
-const sqlBuilder = new SQLBuilder(selectExprListBuilder, whereConditionBuilder, assignmentListBuilder);
-const selectExprList = sqlBuilder.buildSelectExprList({ name: {}, surname: null, email: null, cityId: 'city_id', school: { name: null, pupleCount: {} }, city: null }, { cityId: 2 });
-const whereClause = sqlBuilder.buildWhereClause({ name: 'lalala', surname: ['eee', 'uuu'], email: 'qwerty', cityId: 2 });
-const assignmentList = sqlBuilder.buildAssignmentList({ name: ['lalala'], surname: 'tututu', email: 'asdfgh', schoolId: 3 });
-console.log(selectExprList);
-console.log(whereClause);
-console.log(assignmentList);
+// const sqlBuilder = new SQLBuilder(selectExprListBuilder, whereConditionBuilder, assignmentListBuilder);
+// const selectExprList = sqlBuilder.buildSelectExprList({ name: {}, surname: null, email: null, cityId: 'city_id', school: { name: null, pupleCount: {} }, city: null }, { cityId: 2 });
+// const whereClause = sqlBuilder.buildWhereClause({ name: 'lalala', surname: ['eee', 'uuu'], email: 'qwerty', cityId: 2 });
+// const assignmentList = sqlBuilder.buildAssignmentList({ name: ['lalala'], surname: 'tututu', email: 'asdfgh', schoolId: 3 });
+// console.log(selectExprList);
+// console.log(whereClause);
+// console.log(assignmentList);
