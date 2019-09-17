@@ -1,8 +1,8 @@
 import {
-  GraphQLInt as Int,
-  GraphQLFloat as Float,
-  GraphQLString as String,
-  GraphQLBoolean as Boolean,
+  GraphQLInt,
+  GraphQLFloat,
+  GraphQLString,
+  GraphQLBoolean,
   GraphQLNonNull,
   GraphQLObjectType,
   GraphQLInputObjectType,
@@ -12,35 +12,30 @@ import {
 } from 'graphql';
 import JSON from 'graphql-type-json';
 
-function NonNull(type) {
-  return new GraphQLNonNull(type);
-}
-function Object(type) {
-  return new GraphQLObjectType(type);
-}
-function InputObject(type) {
-  return new GraphQLInputObjectType(type);
-}
-function List(type) {
-  return new GraphQLList(type);
-}
-function EnumType(type) {
-  return new GraphQLEnumType(type);
-}
-function Interface(type) {
-  return new GraphQLInterfaceType(type);
-}
-
 export const types = {
-  Int,
-  Float,
-  String,
-  Boolean,
-  EnumType,
-  NonNull,
-  Object,
-  InputObject,
-  List,
-  Interface,
+  Int: GraphQLInt,
+  Float: GraphQLFloat,
+  String: GraphQLString,
+  Boolean: GraphQLBoolean,
+  
+  NonNull(type) {
+    return new GraphQLNonNull(type);
+  },
+  Object(type) {
+    return new GraphQLObjectType(type);
+  },
+  InputObject(type) {
+    return new GraphQLInputObjectType(type);
+  },
+  List(type) {
+    return new GraphQLList(type);
+  },
+  EnumType(type) {
+    return new GraphQLEnumType(type);
+  },
+  Interface(type) {
+    return new GraphQLInterfaceType(type);
+  },
+
   JSON
 };

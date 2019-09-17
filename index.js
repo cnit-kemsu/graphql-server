@@ -2,8 +2,6 @@ export { types } from './src/graphql/types';
 export { resolveJSON } from './src/graphql/resolvers';
 export { SQLBuilder, jsonArray } from './src/SQLBuilder';
 export { upgradeResolveFn } from './src/graphql/upgradeResolveFn';
-//export { Mapping, jsonArray } from './src/graphql/Mapping';
-//export { getFiles } from './src/graphql/getFiles';
 export { Loader, collate } from './src/graphql/Loader';
 export { compose } from './src/graphql/compose';
 export { graphqlResolver, FileInsert } from './src/graphql/resolver';

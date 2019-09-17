@@ -1,56 +1,57 @@
 import { types as _ } from '../../../index';
-import { Mapping } from '../../../src/graphql/Mapping';
+import { SQLBuilder } from '../../../src/SQLBuilder';
+import { upgradeResolveFn } from '../../../src/graphql/upgradeResolveFn';
 import { Loader } from '../../../src/graphql/Loader';
 
-const { toColumns, toFilter, toAssignment } = new Mapping({}, {
+const { buildSelectExprList, buildWhereClause, buildAssignmentList } = new SQLBuilder({}, {
   keys: idArray => `id IN (${idArray})`,
   name: 'name = ?'
-});
+}, {});
 
-export const RoleType = new _.Object({
+export const RoleType = _.Object({
   name: 'Role',
   fields: {
-    id: { type: new _.NonNull(_.Int) },
-    name: { type: new _.NonNull(_.String) }
+    id: { type: _.NonNull(_.Int) },
+    name: { type: _.NonNull(_.String) }
   }
 });
 
 const searchArgs = {
-  keys: { type: new _.List(_.Int) },
+  keys: { type: _.List(_.Int) },
   name: { type: _.String }
 };
 
 const roles = {
-  type: new _.List(RoleType),
+  type: _.List(RoleType),
   args: {
     limit: { type: _.Int },
     offset: { type: _.Int },
     ...searchArgs
   },
-  resolve(obj, { limit = 10, offset = 0, ...search }, { db }, info) {
-    const cols = toColumns(info);
-    const [filter, params] = toFilter(search);
-    return db.query(`SELECT ${cols} FROM roles ${filter} LIMIT ? OFFSET ?`, [ ...params, limit, offset ]);
+  resolve(obj, { limit = 10, offset = 0, ...search }, { db }, fields) {
+    const [selectExprList] = buildSelectExprList(fields);
+    const [whereCaluse, params] = buildWhereClause(search);
+    return db.query(`SELECT ${selectExprList} FROM roles ${whereCaluse} LIMIT ? OFFSET ?`, [ ...params, limit, offset ]);
   }
-};
+} |> upgradeResolveFn;
 
 const totalRoles = {
   type: _.Int,
   args: searchArgs,
   resolve(obj, search, { db }) {
-    const [filter, params] = toFilter(search);
-    return db.query(`SELECT COUNT(*) FROM roles ${filter}`, params);
+    const [whereCaluse, params] = buildWhereClause(search);
+    return db.query(`SELECT COUNT(*) FROM roles ${whereCaluse}`, params);
   }
 };
 
 const createRole = {
   type: _.Int,
   args: {
-    name: { type: new _.NonNull(_.String) }
+    name: { type: _.NonNull(_.String) }
   },
   async resolve(obj, input, { db }) {
-    const [assignment, params] = toAssignment(input);
-    return await db.query(`INSERT INTO roles ${assignment}`, params)
+    const [assignmentList, params] = buildAssignmentList(input);
+    return await db.query(`INSERT INTO roles ${assignmentList}`, params)
       |> #.insertId;
   }
 };
@@ -58,12 +59,12 @@ const createRole = {
 const updateRole = {
   type: _.Int,
   args: {
-    id: { type: new _.NonNull(_.Int) },
+    id: { type: _.NonNull(_.Int) },
     name: { type: _.String }
   },
   async resolve(obj, { id, ...input }, { db }) {
-    const [assignment, params] = toAssignment(input);
-    return await db.query(`UPDATE roles ${assignment} WHERE id = ?`, [ ...params, id ])
+    const [assignmentList, params] = buildAssignmentList(input);
+    return await db.query(`UPDATE roles ${assignmentList} WHERE id = ?`, [ ...params, id ])
       |> #.affectedRows;
   }
 };
@@ -71,7 +72,7 @@ const updateRole = {
 const deleteRole = {
   type: _.Int,
   args: {
-    id: { type: new _.NonNull(_.Int) }
+    id: { type: _.NonNull(_.Int) }
   },
   async resolve(obj, { id }, { db }) {
     return await db.query('DELETE FROM roles WHERE id = ?', id)
@@ -79,11 +80,11 @@ const deleteRole = {
   }
 };
 
-function loadRolesByKeys(keys, { db }, info) {
-  const cols = toColumns(info);
-  const [filter, params] = toFilter({ keys });
+function loadRolesByKeys(keys, { db }, fields) {
+  const [selectExprList] = buildSelectExprList(fields);
+  const [whereClause, params] = buildWhereClause({ keys });
   return db.query(
-    `SELECT ${cols} FROM roles ${filter}`,
+    `SELECT ${selectExprList} FROM roles ${whereClause}`,
     params
   );
 }

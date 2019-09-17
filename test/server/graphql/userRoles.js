@@ -1,8 +1,12 @@
 import { types as _ } from '../../../src/graphql/types';
-import { Mapping } from '../../../src/graphql/Mapping';
+import { SQLBuilder } from '../../../src/SQLBuilder';
+import { upgradeResolveFn } from '../../../src/graphql/upgradeResolveFn';
 import { PublicError } from '../../../src/error/PublicError';
 
-const { toAssignment } = new Mapping({
+const { buildAssignmentList } = new SQLBuilder({
+  userId: 'user_id',
+  roleId: 'role_id'
+}, {}, {
   userId: 'user_id',
   roleId: 'role_id'
 });
@@ -10,13 +14,13 @@ const { toAssignment } = new Mapping({
 const addRole = {
   type: _.Int,
   args: {
-    userId: { type: new _.NonNull(_.Int) },
-    roleId: { type: new _.NonNull(_.Int) }
+    userId: { type: _.NonNull(_.Int) },
+    roleId: { type: _.NonNull(_.Int) }
   },
   async resolve(obj, input, { db }) {
-    const [assignment, params] = toAssignment(input);
+    const [assignmentList, params] = buildAssignmentList(input);
     try {
-      return await db.query(`INSERT INTO user_roles ${assignment}`, params)
+      return await db.query(`INSERT INTO user_roles ${assignmentList}`, params)
         |> #.affectedRows;
     } catch(error) {
       if (error.code === 'ER_DUP_ENTRY') return 0;
@@ -34,8 +38,8 @@ const addRole = {
 const removeRole = {
   type: _.Int,
   args: {
-    userId: { type: new _.NonNull(_.Int) },
-    roleId: { type: new _.NonNull(_.Int) }
+    userId: { type: _.NonNull(_.Int) },
+    roleId: { type: _.NonNull(_.Int) }
   },
   async resolve(obj, { userId, roleId }, { db }) {
     return await db.query('DELETE FROM user_roles WHERE user_id = ? AND role_id = ?', [userId, roleId])

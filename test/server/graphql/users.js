@@ -1,6 +1,6 @@
 import { types as _ } from '../../../src/graphql/types';
-import { Mapping, jsonArray } from '../../../src/graphql/Mapping';
-//import { getFiles } from '../../../src/graphql/getFiles';
+import { SQLBuilder, jsonArray } from '../../../src/SQLBuilder';
+import { upgradeResolveFn } from '../../../src/graphql/upgradeResolveFn';
 import { hashPassword } from '../../../src/auth/pwdhash';
 import { RoleType } from './roles';
 import { authorize } from '../../../src/graphql/authorize';
@@ -11,7 +11,7 @@ async function wait(time) {
   });
 }
 
-const { toColumns, toFilter, toAssignment } = new Mapping({
+const { buildSelectExprList, buildWhereClause, buildAssignmentList } = new SQLBuilder({
   id: 'id',
   username: 'username',
   email: 'email',
@@ -23,73 +23,78 @@ const { toColumns, toFilter, toAssignment } = new Mapping({
 }, {
   idIn: idArray => `id IN (${idArray})`,
   username: 'username = ?'
+}, {
+  id: 'id',
+  username: 'username',
+  email: 'email',
+  file: 'file_txt',
 });
 
-const UserType = new _.Object({
+const UserType = _.Object({
   name: 'User',
   fields: {
-    id: { type: new _.NonNull(_.Int) },
-    username: { type: new _.NonNull(_.String) },
+    id: { type: _.NonNull(_.Int) },
+    username: { type: _.NonNull(_.String) },
     email: { type: _.String },
     roles: {
-      type: new _.List(RoleType),
-      resolve({ roleKeys }, {}, { roleByKey }, info) {
-        return roleByKey.loadMany(JSON.parse(roleKeys), info);
+      type: _.List(RoleType),
+      resolve({ roleKeys }, {}, { roleByKey }, fields) {
+        if (!roleKeys) return;
+        return roleByKey.loadMany(JSON.parse(roleKeys), fields);
       }
-    }
+    } |> upgradeResolveFn
   }
 });
 
 const searchArgs = {
-  idIn: { type: new _.List(_.Int) },
+  idIn: { type: _.List(_.Int) },
   username: { type: _.String },
   email: { type: _.String }
 };
 
 const users = {
-  type: new _.List(UserType),
+  type: _.List(UserType),
   args: {
     limit: { type: _.Int },
     offset: { type: _.Int },
     ...searchArgs
   },
-  resolve(obj, { limit = 10, offset = 0, ...search }, { db, user }, info) {
+  async resolve(obj, { limit = 10, offset = 0, ...search }, { db, user }, fields) {
     authorize(user);
-    const cols = toColumns(info);
-    const [filter, params] = toFilter(search);
-    return db.query(`SELECT ${cols} FROM users ${filter} LIMIT ? OFFSET ?`, [ ...params, limit, offset ]);
+    const [selectExprList] = buildSelectExprList(fields);
+    const [whereCaluse, params] = buildWhereClause(search);
+    const res = await db.query(`SELECT ${selectExprList} FROM users ${whereCaluse} LIMIT ? OFFSET ?`, [ ...params, limit, offset ]);
+    return res;
   }
-};
+} |> upgradeResolveFn;
 
 const totalUsers = {
   type: _.Int,
   args: searchArgs,
   async resolve(obj, search, { db }) {
-    const [filter, params] = toFilter(search);
-    return await db.query(`SELECT COUNT(*) count FROM users ${filter}`, params)
-      |> #.count;
+    const [whereCaluse, params] = buildWhereClause(search);
+    return await db.query(`SELECT COUNT(*) count FROM users ${whereCaluse}`, params)
+      |> #[0].count;
   }
 };
 
 const createUser = {
   type: _.Int,
   args: {
-    username: { type: new _.NonNull(_.String) },
+    username: { type: _.NonNull(_.String) },
     email: { type: _.String },
-    password: { type: new _.NonNull(_.String) },
+    password: { type: _.NonNull(_.String) },
     file: { type: _.JSON }
   },
-  async resolve(obj, { password, file, ...input }, { db }, info) {
+  async resolve(obj, { password, file, ...input }, { db }) {
     //await wait(2000);
 
-    //const { file, email } = getFiles(files, ['email'], info);
-
-    const [assignment, params] = toAssignment({
+    const [assignmentList, params] = buildAssignmentList({
       pwdhash: hashPassword(password),
       ...input,
       file: file?.buffer
     });
-    return await db.query(`INSERT INTO users ${assignment}`, params)
+    return await db.query(`INSERT INTO users ${assignmentList}`, params)
       |> #.insertId;
   }
 };
@@ -97,14 +102,14 @@ const createUser = {
 const updateUser = {
   type: _.Int,
   args: {
-    id: { type: new _.NonNull(_.Int) },
+    id: { type: _.NonNull(_.Int) },
     username: { type: _.String },
     email: { type: _.String }
   },
   async resolve(obj, { id, ...input }, { db }) {
     await wait(500);
-    const [assignment, params] = toAssignment(input);
-    return await db.query(`UPDATE users ${assignment} WHERE id = ?`, [ ...params, id ])
+    const [assignmentList, params] = buildAssignmentList(input);
+    return await db.query(`UPDATE users ${assignmentList} WHERE id = ?`, [ ...params, id ])
       |> #.affectedRows;
   }
 };
@@ -112,7 +117,7 @@ const updateUser = {
 const deleteUser = {
   type: _.Int,
   args: {
-    id: { type: new _.NonNull(_.Int) }
+    id: { type: _.NonNull(_.Int) }
   },
   async resolve(obj, { id }, { db }) {
     await wait(1000);
