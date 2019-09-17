@@ -7,11 +7,11 @@ export function upgradeResolveFn(target) {
   
   if (resolveFn.constructor === AsyncFunction) {
     target.resolve = async function (obj, args, context, info) {
-      return await resolveFn(obj, args, context, graphqlFields(info));
+      return await resolveFn(obj, args, context, { fields: graphqlFields(info) });
     };
   } else {
     target.resolve = function (obj, args, context, info) {
-      return resolveFn(obj, args, context, graphqlFields(info));
+      return resolveFn(obj, args, context, { fields: graphqlFields(info) });
     };
   }
   return target;
