@@ -148,7 +148,7 @@ export class SQLBuilder {
       let predicate;
       if (predicateBuilder == null) predicate = predicateName + (isArray ? ` IN (${expr})` : ` = ${expr}`);
       else if (predicateBuilder?.constructor === Function) predicate = predicateBuilder(expr);
-      else if (typeof predicateBuilder === 'string') predicate = predicateBuilder;
+      else if (typeof predicateBuilder === 'string') predicate = predicateBuilder + (isArray ? ` IN (${expr})` : ` = ${expr}`);
       
       whereCondition += separator + predicate;
 
