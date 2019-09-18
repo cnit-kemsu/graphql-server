@@ -39,6 +39,6 @@ const signIn = {
   }
 };
 
-export default [{
+export default { query: {
   signIn
-}];
+}};

@@ -38,9 +38,9 @@ const UserType = _.Object({
     email: { type: _.String },
     roles: {
       type: _.List(RoleType),
-      resolve({ roleKeys }, {}, { roleByKey }, fields) {
+      resolve({ roleKeys }, {}, { loaders }, { fields }) {
         if (!roleKeys) return;
-        return roleByKey.loadMany(JSON.parse(roleKeys), fields);
+        return loaders.roleByKey.loadMany(JSON.parse(roleKeys), fields);
       }
     } |> upgradeResolveFn
   }
@@ -59,7 +59,7 @@ const users = {
     offset: { type: _.Int },
     ...searchArgs
   },
-  async resolve(obj, { limit = 10, offset = 0, ...search }, { db, user }, fields) {
+  async resolve(obj, { limit = 10, offset = 0, ...search }, { db, user }, { fields }) {
     authorize(user);
     const [selectExprList] = buildSelectExprList(fields);
     const [whereCaluse, params] = buildWhereClause(search);
@@ -126,11 +126,11 @@ const deleteUser = {
   }
 };
 
-export default [{
+export default { query: {
   users,
   totalUsers
-}, {
+}, mutation: {
   createUser,
   updateUser,
   deleteUser
-}];
+}};

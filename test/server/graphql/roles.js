@@ -1,7 +1,8 @@
 import { types as _ } from '../../../index';
 import { SQLBuilder } from '../../../src/SQLBuilder';
 import { upgradeResolveFn } from '../../../src/graphql/upgradeResolveFn';
-import { Loader } from '../../../src/graphql/Loader';
+import { Loader } from '../../../src/Loader';
+import { collation } from '../../../src/Loader/collation';
 
 const { buildSelectExprList, buildWhereClause, buildAssignmentList } = new SQLBuilder({}, {
   keys: idArray => `id IN (${idArray})`,
@@ -28,7 +29,7 @@ const roles = {
     offset: { type: _.Int },
     ...searchArgs
   },
-  resolve(obj, { limit = 10, offset = 0, ...search }, { db }, fields) {
+  resolve(obj, { limit = 10, offset = 0, ...search }, { db }, { fields }) {
     const [selectExprList] = buildSelectExprList(fields);
     const [whereCaluse, params] = buildWhereClause(search);
     return db.query(`SELECT ${selectExprList} FROM roles ${whereCaluse} LIMIT ? OFFSET ?`, [ ...params, limit, offset ]);
@@ -89,13 +90,13 @@ function loadRolesByKeys(keys, { db }, fields) {
   );
 }
 
-export default [{
+export default { query: {
   roles,
   totalRoles
-}, {
+}, mutation: {
   createRole,
   updateRole,
   deleteRole
-}, {
-  roleByKey: new Loader(loadRolesByKeys)
-}];
+}, loaders: {
+  roleByKey: new Loader(loadRolesByKeys, collation.find('id'))
+}};

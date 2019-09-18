@@ -58,7 +58,7 @@ export function graphqlResolver(schema, loaders, options) {
       const [context, extensions] = await options(request);
       context.loaders = {};
       for (const [name, loader] of Object.entries(loaders)) {
-        context.loaders[name] = loader.bindToContext(context, name);
+        context.loaders[name] = loader.bindToContext(context);//, name);
       }
 
       return {

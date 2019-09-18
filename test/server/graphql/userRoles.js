@@ -47,7 +47,7 @@ const removeRole = {
   }
 };
 
-export default [,{
+export default { mutation: {
   addRole,
   removeRole
-}];
+}};
