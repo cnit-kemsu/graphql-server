@@ -186,7 +186,7 @@ export class SQLBuilder {
       let assignment;
       if (assignmentBuilder?.constructor === Function) {
 
-        const _assignment = assignmentBuilder(inputArgs, isUpdateClause);
+        const _assignment = assignmentBuilder(inputValue, isUpdateClause);
         if (_assignment instanceof Array) {
           assignment = _assignment[0];
           if (typeof assignment !== 'string') throw TypeError(`A value of ${getClassNameOrType(assignment)} is not valid for the first returned element of '${inputName}', allowed only 'string'`);
