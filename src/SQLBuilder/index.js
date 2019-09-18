@@ -163,7 +163,7 @@ export class SQLBuilder {
     return [whereCondition === '' ? '' : 'WHERE ' + whereCondition, _params];
   }
 
-  buildAssignmentList(inputArgs, isUpdateClause = false) {
+  async buildAssignmentList(inputArgs, context) {
 
     let assignmentList = '';
     const _params = [];
@@ -186,7 +186,7 @@ export class SQLBuilder {
       let assignment;
       if (assignmentBuilder?.constructor === Function) {
 
-        const _assignment = assignmentBuilder(inputValue, isUpdateClause);
+        const _assignment = await assignmentBuilder(inputValue, context);
         if (_assignment instanceof Array) {
           assignment = _assignment[0];
           if (typeof assignment !== 'string') throw TypeError(`A value of ${getClassNameOrType(assignment)} is not valid for the first returned element of '${inputName}', allowed only 'string'`);
