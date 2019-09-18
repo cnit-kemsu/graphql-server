@@ -14,17 +14,17 @@ function reduceEqualKeys(keys) {
 //   }
 
 //   createBoundLoader() {
-//     this.context[this.name] = new BoundLoader(this.batchLoadFn, this.context);
+//     if (this.context.loaders[this.name].constructor !== BoundLoader) this.context.loaders[this.name] = new BoundLoader(this.batchLoadFn, this.context);
 //   }
 
-//   load(key, loadInfo) {
+//   async load(key, loadInfo) {
 //     this.createBoundLoader();
-//     return this.context[this.name].load(key, loadInfo);
+//     return await this.context.loaders[this.name].load(key, loadInfo);
 //   }
 
-//   loadMany(keys, loadInfo) {
+//   async loadMany(keys, loadInfo) {
 //     this.createBoundLoader();
-//     return this.context[this.name].loadMany(keys, loadInfo);
+//     return await this.context.loaders[this.name].loadMany(keys, loadInfo);
 //   }
 // }
 
@@ -36,7 +36,7 @@ export class Loader {
     this.batchLoadFn = this.batchLoadFn.bind(this);
   }
 
-  bindToContext(context) {//, name) {
+  bindToContext(context) {//}, name) {
     //return new LoaderCreator(this.batchLoadFn, context, name);
     return new BoundLoader(this.batchLoadFn, context);
   }

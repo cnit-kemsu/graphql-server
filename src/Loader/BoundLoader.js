@@ -13,13 +13,13 @@ export class BoundLoader {
     if (this.loadInfo === undefined) this.loadInfo = loadInfo;
   }
 
-  load(key, loadInfo) {
+  async load(key, loadInfo) {
     this.setLoadInfo(loadInfo);
-    return this.dataloader.load(key);
+    return await this.dataloader.load(key);
   }
 
-  loadMany(keys, loadInfo) {
+  async loadMany(keys, loadInfo) {
     this.setLoadInfo(loadInfo);
-    return this.dataloader.loadMany(keys);
+    return await this.dataloader.loadMany(keys);
   }
 }
