@@ -195,7 +195,7 @@ export class SQLBuilder {
           if (typeof assignment !== 'string') throw TypeError(`A value of ${getClassNameOrType(assignment)} is not valid for the first returned element of '${inputName}', allowed only 'string'`);
           _params.push(..._assignment.slice(1));
         } else if (typeof _assignment === 'string') assignment = _assignment;
-        else throw TypeError(`A value of ${getClassNameOrType(_assignment)} is not valid for the return value of '${inputName}', allowed: 'string' or 'Array'`);
+        else if (_assignment != null) throw TypeError(`A value of ${getClassNameOrType(_assignment)} is not valid for the return value of '${inputName}', allowed: 'string' or 'Array'`);
       } else {
         assignment = `${assignmentBuilder} = ?`;
         _params.push(inputValue);
