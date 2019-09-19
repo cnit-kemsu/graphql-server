@@ -2,6 +2,8 @@ function getClassNameOrType(value) {
   return value instanceof Object ? `class '${value.constructor.name}'`: `type '${typeof value}'`;
 }
 
+const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
+
 function getDerivedSelectExprListBuilder(selectExprListBuilder, requestedFields) {
   const derivedSelectExprListBuilder = {};
   for (const alias in requestedFields) {
@@ -77,6 +79,7 @@ export class SQLBuilder {
       const assignmentBuilder = assignmentListBuilder[assignment];
       const allowedType = assignmentBuilder === null
       || assignmentBuilder?.constructor === Function
+      || assignmentBuilder?.constructor === AsyncFunction
       || typeof assignmentBuilder === 'string';
       if (!allowedType) throw TypeError(`A value of ${getClassNameOrType(assignmentBuilder)} is not valid for the property '${assignment}' of the constructor argument 'assignmentListBuilder', allowed: 'null', 'string', or 'Function'`);
       this.assignmentListBuilder[assignment] = assignmentBuilder;
@@ -175,7 +178,7 @@ export class SQLBuilder {
       const inputValue = inputArgs[inputName];
       if (inputValue === undefined) continue;
       
-      if (assignmentBuilder?.constructor !== Function) {
+      if (assignmentBuilder?.constructor !== Function && assignmentBuilder?.constructor !== AsyncFunction) {
         const allowedType = inputValue === null
         || typeof inputValue === 'string'
         || typeof inputValue === 'number'
@@ -184,7 +187,7 @@ export class SQLBuilder {
       }
 
       let assignment;
-      if (assignmentBuilder?.constructor === Function) {
+      if (assignmentBuilder?.constructor === Function || assignmentBuilder?.constructor === AsyncFunction) {
 
         const _assignment = await assignmentBuilder(inputValue, context);
         if (_assignment instanceof Array) {
@@ -194,7 +197,7 @@ export class SQLBuilder {
         } else if (typeof _assignment === 'string') assignment = _assignment;
         else throw TypeError(`A value of ${getClassNameOrType(_assignment)} is not valid for the return value of '${inputName}', allowed: 'string' or 'Array'`);
       } else {
-        assignment = `${inputName} = ?`;
+        assignment = `${assignmentBuilder} = ?`;
         _params.push(inputValue);
       }
       
@@ -210,7 +213,6 @@ export class SQLBuilder {
 export function jsonArray(cols) {
   return `CONCAT('[', GROUP_CONCAT(${cols} SEPARATOR ', '), ']')`;
 }
-
 
 // const selectExprListBuilder = {
 //   name: '_name',
@@ -230,13 +232,15 @@ export function jsonArray(cols) {
 // const assignmentListBuilder = {
 //   name: '_name',
 //   surname: null,
-//   schoolId({ schoolId }) { return ['school_id = ?, city_id = (SELECT city_id FROM schools WHERE school_id = ?)', schoolId, schoolId]; }
+//   async schoolId({ schoolId }) { return ['school_id = ?, city_id = (SELECT city_id FROM schools WHERE school_id = ?)', schoolId, schoolId]; }
 // };
 
 // const sqlBuilder = new SQLBuilder(selectExprListBuilder, whereConditionBuilder, assignmentListBuilder);
 // const selectExprList = sqlBuilder.buildSelectExprList({ name: {}, surname: null, email: null, cityId: 'city_id', school: { name: null, pupleCount: {} }, city: null }, { cityId: 2 });
 // const whereClause = sqlBuilder.buildWhereClause({ name: 'lalala', surname: ['eee', 'uuu'], email: 'qwerty', cityId: 2 });
-// const assignmentList = sqlBuilder.buildAssignmentList({ name: ['lalala'], surname: 'tututu', email: 'asdfgh', schoolId: 3 });
 // console.log(selectExprList);
 // console.log(whereClause);
-// console.log(assignmentList);
+// (async function lalala () {
+//   const assignmentList = await sqlBuilder.buildAssignmentList({ name: 'lalala', surname: 'tututu', email: 'asdfgh', schoolId: 3 });
+//   console.log(assignmentList);
+// })()
