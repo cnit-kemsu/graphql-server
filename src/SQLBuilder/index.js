@@ -161,6 +161,7 @@ export class SQLBuilder {
     for (const predicate of extraPredicates) {
       if (typeof predicate === 'string') whereCondition += separator + predicate;
       else throw TypeError(`A value of ${getClassNameOrType(predicate)} is not valid for the element of the 'buildWhereClause' function argument 'extraPredicates', allowed only 'string'`);
+      if (!separator) separator = ' AND ';
     }
 
     return [whereCondition === '' ? '' : 'WHERE ' + whereCondition, _params];
@@ -195,8 +196,9 @@ export class SQLBuilder {
           if (typeof assignment !== 'string') throw TypeError(`A value of ${getClassNameOrType(assignment)} is not valid for the first returned element of '${inputName}', allowed only 'string'`);
           _params.push(..._assignment.slice(1));
         } else if (typeof _assignment === 'string') assignment = _assignment;
+        else if (_assignment == null) continue;
         else throw TypeError(`A value of ${getClassNameOrType(_assignment)} is not valid for the return value of '${inputName}', allowed: 'string' or 'Array'`);
-      } else if (_assignment != null) {
+      } else {
         assignment = `${assignmentBuilder} = ?`;
         _params.push(inputValue);
       }
