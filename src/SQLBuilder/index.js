@@ -167,49 +167,113 @@ export class SQLBuilder {
     return [whereCondition === '' ? '' : 'WHERE ' + whereCondition, _params];
   }
 
+  // async buildAssignmentList(inputArgs, context) {
+
+  //   let assignmentList = '';
+  //   const _params = [];
+  //   let separator = '';
+  //   for (const inputName in inputArgs) {
+      
+  //     let assignmentBuilder = this.assignmentListBuilder[inputName];
+  //     if (assignmentBuilder == null) assignmentBuilder = inputName;
+  //     const inputValue = inputArgs[inputName];
+  //     if (inputValue === undefined) continue;
+      
+  //     if (assignmentBuilder?.constructor !== Function && assignmentBuilder?.constructor !== AsyncFunction) {
+  //       const allowedType = inputValue === null
+  //       || typeof inputValue === 'string'
+  //       || typeof inputValue === 'number'
+  //       || typeof inputValue === 'boolean';
+  //       if (!allowedType) throw TypeError(`A value of ${getClassNameOrType(inputValue)} is not valid for the property '${inputName}' of the argument 'inputArgs' of the function 'buildAssignmentList' , еру ащддщцштп allowed: 'null', 'boolean', 'number', or 'string'`);
+  //     }
+
+  //     let assignment;
+  //     if (assignmentBuilder?.constructor === Function || assignmentBuilder?.constructor === AsyncFunction) {
+
+  //       const _assignment = await assignmentBuilder(inputValue, context);
+  //       if (_assignment instanceof Array) {
+  //         assignment = _assignment[0];
+  //         if (typeof assignment !== 'string') throw TypeError(`A value of ${getClassNameOrType(assignment)} is not valid for the first returned element of '${inputName}', allowed only 'string'`);
+  //         _params.push(..._assignment.slice(1));
+  //       } else if (typeof _assignment === 'string') assignment = _assignment;
+  //       else if (_assignment == null) continue;
+  //       else throw TypeError(`A value of ${getClassNameOrType(_assignment)} is not valid for the return value of '${inputName}', allowed: 'string' or 'Array'`);
+  //     } else {
+  //       assignment = `${assignmentBuilder} = ?`;
+  //       _params.push(inputValue);
+  //     }
+      
+  //     assignmentList += separator + assignment;
+
+  //     if (!separator) separator = ', ';
+  //   }
+
+  //   return [assignmentList, _params];
+  // }
   async buildAssignmentList(inputArgs, context) {
 
-    let assignmentList = '';
-    const _params = [];
-    let separator = '';
+    const assignmentList = [], params = [];
     for (const inputName in inputArgs) {
-      
-      let assignmentBuilder = this.assignmentListBuilder[inputName];
-      if (assignmentBuilder == null) assignmentBuilder = inputName;
+
       const inputValue = inputArgs[inputName];
+      // if the value of the current argument is not defined, then processing is skipped
       if (inputValue === undefined) continue;
       
-      if (assignmentBuilder?.constructor !== Function && assignmentBuilder?.constructor !== AsyncFunction) {
-        const allowedType = inputValue === null
-        || typeof inputValue === 'string'
-        || typeof inputValue === 'number'
-        || typeof inputValue === 'boolean';
-        if (!allowedType) throw TypeError(`A value of ${getClassNameOrType(inputValue)} is not valid for the property '${inputName}' of the argument 'inputArgs' of the function 'buildAssignmentList' , еру ащддщцштп allowed: 'null', 'boolean', 'number', or 'string'`);
-      }
+      // gets the assignment builder for the current argument name
+      let builder = this.assignmentListBuilder[inputName];
+      // if the current assignment builder does not exist, then it is created dynamically
+      if (builder == null) builder = inputName;
 
-      let assignment;
-      if (assignmentBuilder?.constructor === Function || assignmentBuilder?.constructor === AsyncFunction) {
+      const builderType = builder?.constructor || typeof builder;
+      //if the type of the current builder is not a function or asynchronous function,
+      //then validates  
+      // if (builderType !== Function && builderType !== AsyncFunction) {
+      //   const allowedType = inputValue === null
+      //   || typeof inputValue === 'string'
+      //   || typeof inputValue === 'number'
+      //   || typeof inputValue === 'boolean';
+      //   if (!allowedType) throw TypeError(`A value of ${getClassNameOrType(inputValue)} is not valid for the property '${inputName}' of the argument 'inputArgs' of the function 'buildAssignmentList' , еру ащддщцштп allowed: 'null', 'boolean', 'number', or 'string'`);
+      // }
 
-        const _assignment = await assignmentBuilder(inputValue, context);
-        if (_assignment instanceof Array) {
-          assignment = _assignment[0];
-          if (typeof assignment !== 'string') throw TypeError(`A value of ${getClassNameOrType(assignment)} is not valid for the first returned element of '${inputName}', allowed only 'string'`);
-          _params.push(..._assignment.slice(1));
-        } else if (typeof _assignment === 'string') assignment = _assignment;
-        else if (_assignment == null) continue;
-        else throw TypeError(`A value of ${getClassNameOrType(_assignment)} is not valid for the return value of '${inputName}', allowed: 'string' or 'Array'`);
-      } else {
-        assignment = `${assignmentBuilder} = ?`;
-        _params.push(inputValue);
+      try {
+
+        let assignment;
+        if (builderType === Function || builderType === AsyncFunction) {
+
+          const _assignment = await builder(inputValue, context);
+          if (_assignment instanceof Array) {
+            assignment = _assignment[0];
+            if (typeof assignment !== 'string') throw TypeError(`A value of ${getClassNameOrType(assignment)} is not valid for the first element returned by the assignment builder '${inputName}', allowed only 'string'`);
+            params.push(..._assignment.slice(1));
+          } else if (typeof _assignment === 'string') assignment = _assignment;
+          else if (_assignment == null) continue;
+          else throw TypeError(`A value of ${getClassNameOrType(_assignment)} is not valid for the return value of '${inputName}', allowed: 'string' or 'Array'`);
+
+        } else if (builderType === 'string') {
+          // creates an expression to assign a column with the name of the current builder
+          assignmentList.push(`${builderType} = ?`);
+          convertParam(inputValue) |>
+          params.push(#);
+        }
+
+      } catch(error) {
+        throw new TypeError(`An error has occurred while trying to build assignment for argument name ${inputName} of type ${builderType}. ${error.message}`);
       }
       
-      assignmentList += separator + assignment;
-
-      if (!separator) separator = ', ';
     }
 
-    return [assignmentList, _params];
+    return [assignmentList.join(', '), params];
   }
+}
+
+function convertParam(param) {
+  if (param === null) return null;
+  if (param instanceof Object) {
+    if (param.constructor === Object || param.constructor === Array) return JSON.stringify(param);
+    //if (param.constructor === Date) return param;
+    throw new TypeError(`Invalid param type: ${param.constructor}`);
+  }
+  return param;
 }
 
 export function jsonArray(cols) {
