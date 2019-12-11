@@ -1,5 +1,10 @@
-function getClassNameOrType(value) {
-  return value instanceof Object ? `class '${value.constructor.name}'`: `type '${typeof value}'`;
+function getTypeOrInstance(value) {
+  if (value === null) return null;
+  return value instanceof Object ? value.constructor : typeof value;
+}
+
+function printTypeOrInstance(value) {
+  return value instanceof Object ? `instance of '${value.constructor.name}'`: `type '${typeof value}'`;
 }
 
 const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
@@ -27,7 +32,7 @@ function getDerivedSelectExprListBuilder(selectExprListBuilder, requestedFields)
 
       }
     } else if (typeof field === 'string') derivedSelectExprListBuilder[alias] = field;
-    else throw TypeError(`A value of ${getClassNameOrType(field)} is not valid for the requested field '${alias}', allowed: 'null', 'string' or 'Object'`);
+    else throw TypeError(`A value of ${printTypeOrInstance(field)} is not valid for the requested field '${alias}', allowed: 'null', 'string' or 'Object'`);
 
   }
   return derivedSelectExprListBuilder;
@@ -37,7 +42,7 @@ export class SQLBuilder {
 
   constructor(selectExprListBuilder, whereConditionBuilder, assignmentListBuilder) {
 
-    //validate selectExprListBuilder
+    // validates selectExprListBuilder
     this.selectExprListBuilder = {};
     for (const alias in selectExprListBuilder) {
       const selectExprBuilder = selectExprListBuilder[alias];
@@ -46,7 +51,7 @@ export class SQLBuilder {
       || selectExprBuilder?.constructor === Object
       || selectExprBuilder?.constructor === Function
       || typeof selectExprBuilder === 'string';
-      if (!allowedType) throw TypeError(`A value of ${getClassNameOrType(selectExprBuilder)} is not valid for the property '${alias}' of the constructor argument 'selectExprListBuilder', allowed: 'null', 'string', 'Function' or 'Object'`);
+      if (!allowedType) throw TypeError(`A value of ${printTypeOrInstance(selectExprBuilder)} is not valid for the property '${alias}' of the constructor argument 'selectExprListBuilder', allowed: 'null', 'string', 'Function' or 'Object'`);
 
       if (selectExprBuilder?.constructor === Object) {
         for (const _alias in selectExprBuilder) {
@@ -55,34 +60,34 @@ export class SQLBuilder {
           const _allowedType = _selectExprBuilder === null
           || _selectExprBuilder?.constructor === Function
           || typeof _selectExprBuilder === 'string';
-          if (!_allowedType) throw TypeError(`A value of ${getClassNameOrType(_selectExprBuilder)} is not valid for the nested property '${alias}.${_alias}' of the constructor argument 'selectExprListBuilder', allowed: 'null', 'string', or 'Function'`);
+          if (!_allowedType) throw TypeError(`A value of ${printTypeOrInstance(_selectExprBuilder)} is not valid for the nested property '${alias}.${_alias}' of the constructor argument 'selectExprListBuilder', allowed: 'null', 'string', or 'Function'`);
         }
       }
 
       this.selectExprListBuilder[alias] = selectExprBuilder;
     }
 
-    //validate whereConditionBuilder
+    // validates whereConditionBuilder
     this.whereConditionBuilder = {};
     for (const predicate in whereConditionBuilder) {
-      const predicateBuilder = whereConditionBuilder[predicate];
-      const allowedType = predicateBuilder === null
-      || predicateBuilder?.constructor === Function
-      || typeof predicateBuilder === 'string';
-      if (!allowedType) throw TypeError(`A value of ${getClassNameOrType(predicateBuilder)} is not valid for the property '${predicate}' of the constructor argument 'whereConditionBuilder', allowed: 'null', 'string', or 'Function'`);
-      this.whereConditionBuilder[predicate] = predicateBuilder;
+      const builder = whereConditionBuilder[predicate];
+      const builderType = getTypeOrInstance(builder);
+      if ( builderType === Function
+        || builderType === 'string'
+      ) throw TypeError(`The predicate builder must be of type 'string' or an instance of 'Function', but got ${printTypeOrInstance(builder)}.`);
+      this.whereConditionBuilder[predicate] = builder;
     }
 
-    //validate assignmentListBuilder
+    // validates assignmentListBuilder
     this.assignmentListBuilder = {};
     for (const assignment in assignmentListBuilder) {
-      const assignmentBuilder = assignmentListBuilder[assignment];
-      const allowedType = assignmentBuilder === null
-      || assignmentBuilder?.constructor === Function
-      || assignmentBuilder?.constructor === AsyncFunction
-      || typeof assignmentBuilder === 'string';
-      if (!allowedType) throw TypeError(`A value of ${getClassNameOrType(assignmentBuilder)} is not valid for the property '${assignment}' of the constructor argument 'assignmentListBuilder', allowed: 'null', 'string', or 'Function'`);
-      this.assignmentListBuilder[assignment] = assignmentBuilder;
+      const builder = assignmentListBuilder[assignment];
+      const builderType = getTypeOrInstance(builder);
+      if (builderType === Function
+        || builderType === AsyncFunction
+        || builderType === 'string'
+      ) throw TypeError(`The assignment builder must be of type 'string' or one of the following instances: 'Function' or 'AsyncFunction', but got ${printTypeOrInstance(builder)}.`);
+      this.assignmentListBuilder[assignment] = builder;
     }
 
     this.buildSelectExprList = this.buildSelectExprList.bind(this);
@@ -110,10 +115,10 @@ export class SQLBuilder {
           const _selectExpr = selectExprBuilder(params);
           if (_selectExpr instanceof Array) {
             selectExpr = _selectExpr[0];
-            if (typeof selectExpr !== 'string') throw TypeError(`A value of ${getClassNameOrType(selectExpr)} is not valid for the first returned element of '${alias}', allowed only 'string'`);
+            if (typeof selectExpr !== 'string') throw TypeError(`A value of ${printTypeOrInstance(selectExpr)} is not valid for the first returned element of '${alias}', allowed only 'string'`);
             _params.push(..._selectExpr.slice(1));
           } else if (typeof _selectExpr === 'string') selectExpr = _selectExpr;
-          else throw TypeError(`A value of ${getClassNameOrType(_selectExpr)} is not valid for the return value of '${alias}', allowed: 'string' or 'Array'`);
+          else throw TypeError(`A value of ${printTypeOrInstance(_selectExpr)} is not valid for the return value of '${alias}', allowed: 'string' or 'Array'`);
         } else selectExpr = selectExprBuilder;
 
         selectExprList += selectExpr + ' AS ' + alias + separator;
@@ -123,94 +128,87 @@ export class SQLBuilder {
     return [selectExprList, _params];
   }
 
-  buildWhereClause(filter = {}, extraPredicates = []) {
+  /**
+   * @param {object} filters
+   * @param {string | number | boolean | (string | number | boolean)[]=} filters.
+   * @param {string[]} [extraPredicates]
+   * @returns {string}
+   */
+  buildWhereClause(filters, extraPredicates) {
 
-    let whereCondition = '';
-    const _params = [];
-    let separator = '';
-    for (const predicateName in filter) {
+    if (filters == null) return '';
+    // validates input arguments
+    if (filters.constructor !== Object)
+      throw TypeError(`The first input argument to the method 'buildWhereClause' must be an instance of 'Object', but got ${printTypeOrInstance(filters)}.`);
+    if (extraPredicates?.constructor !== Array)
+      throw TypeError(`The second input argument to the method 'buildWhereClause' must be an instance of 'Array', but got ${printTypeOrInstance(extraPredicates)}.`);
+
+    const predicates = [], params = [];
+    for (const filterName in filters) {
       
-      const predicateBuilder = this.whereConditionBuilder[predicateName];
-      const predicateValue = filter[predicateName];
-      if (predicateValue === undefined) continue;
+      const filterValue = filters[filterName];
+      // if the value of the current filter is not defined, then processing is skipped
+      if (filterValue === undefined) continue;
+
+      let builder = this.whereConditionBuilder[filterName];
+      // if the builder does not exist, then it is created dynamically
+      if (builder == null) builder = filterName;
       
-      if (predicateBuilder == null) {
-        const allowedType = predicateValue === null
-        || predicateValue?.constructor === Array
-        || typeof predicateValue === 'string'
-        || typeof predicateValue === 'number'
-        || typeof predicateValue === 'boolean';
-        if (!allowedType) throw TypeError(`A value of ${getClassNameOrType(predicateValue)} is not valid for the property '${predicateName}' of the 'buildWhereClause' function argument 'filter', allowed: 'null', 'boolean', 'number', 'string', or 'Array'`);
+      const builderType = getTypeOrInstance(builder);
+      try {
+
+        const isMultipleParameterized = filterValue instanceof Array;
+        if (!isMultipleParameterized && filterValue instanceof Object)
+          throw TypeError(`The filter must be an instance of 'Array' or one of the following types: 'null', 'boolean', 'number', 'string', but got ${printTypeOrInstance(filterValue)}.`);
+        if (isMultipleParameterized) for (const index in filterValue) {
+          const elementType = getTypeOrInstance(filterValue[index]);
+          if (elementType !== null
+            || elementType !== 'string'
+            || elementType !== 'number'
+            || elementType !== 'boolean'
+          ) throw TypeError(`Each filter element must be one of the following types: 'null', 'boolean', 'number', 'string', but got ${printTypeOrInstance(elementType)}.`);
+        }
+
+        const substitution = isMultipleParameterized ? new Array(filterValue.length).fill('?').join(', ') : '?';
+
+        if (builderType === Function) {
+          builder(substitution)
+          |> predicates.push;
+        } else {
+          isMultipleParameterized ? ` IN (${substitution})` : ` = ${substitution}`
+          |> predicates.push(filterName + #);
+        }
+
+        if (isMultipleParameterized) params.push(...filterValue);
+        else params.push(filterValue);
+
+      } catch(error) {
+        throw new TypeError(`An error occurred while trying to build a predicate for a filter named ${filterName}. ${error.message}`);
       }
 
-      const isArray = predicateValue instanceof Array;
-      const expr = isArray ? new Array(predicateValue.length).fill('?').join(', ') : '?';
-      if (isArray) _params.push(...predicateValue);
-      else _params.push(predicateValue);
-
-      let predicate;
-      if (predicateBuilder == null) predicate = predicateName + (isArray ? ` IN (${expr})` : ` = ${expr}`);
-      else if (predicateBuilder?.constructor === Function) predicate = predicateBuilder(expr);
-      else if (typeof predicateBuilder === 'string') predicate = predicateBuilder;// + (isArray ? ` IN (${expr})` : ` = ${expr}`);
-      
-      whereCondition += separator + predicate;
-
-      if (!separator) separator = ' AND ';
     }
 
-    for (const predicate of extraPredicates) {
-      if (typeof predicate === 'string') whereCondition += separator + predicate;
-      else throw TypeError(`A value of ${getClassNameOrType(predicate)} is not valid for the element of the 'buildWhereClause' function argument 'extraPredicates', allowed only 'string'`);
-      if (!separator) separator = ' AND ';
+    if (extraPredicates != null) for (const predicate of extraPredicates) {
+      if (typeof predicate !== 'string') throw TypeError(`Each extra predicate must be of type 'string', but one is ${printTypeOrInstance(predicate)}.`);
+      predicates.push(predicate);
     }
 
-    return [whereCondition === '' ? '' : 'WHERE ' + whereCondition, _params];
+    return [predicates.length === 0 ? '' : 'WHERE ' + predicates.map(putInParentheses).join(' AND '), params];
   }
 
-  // async buildAssignmentList(inputArgs, context) {
-
-  //   let assignmentList = '';
-  //   const _params = [];
-  //   let separator = '';
-  //   for (const inputName in inputArgs) {
-      
-  //     let assignmentBuilder = this.assignmentListBuilder[inputName];
-  //     if (assignmentBuilder == null) assignmentBuilder = inputName;
-  //     const inputValue = inputArgs[inputName];
-  //     if (inputValue === undefined) continue;
-      
-  //     if (assignmentBuilder?.constructor !== Function && assignmentBuilder?.constructor !== AsyncFunction) {
-  //       const allowedType = inputValue === null
-  //       || typeof inputValue === 'string'
-  //       || typeof inputValue === 'number'
-  //       || typeof inputValue === 'boolean';
-  //       if (!allowedType) throw TypeError(`A value of ${getClassNameOrType(inputValue)} is not valid for the property '${inputName}' of the argument 'inputArgs' of the function 'buildAssignmentList' , еру ащддщцштп allowed: 'null', 'boolean', 'number', or 'string'`);
-  //     }
-
-  //     let assignment;
-  //     if (assignmentBuilder?.constructor === Function || assignmentBuilder?.constructor === AsyncFunction) {
-
-  //       const _assignment = await assignmentBuilder(inputValue, context);
-  //       if (_assignment instanceof Array) {
-  //         assignment = _assignment[0];
-  //         if (typeof assignment !== 'string') throw TypeError(`A value of ${getClassNameOrType(assignment)} is not valid for the first returned element of '${inputName}', allowed only 'string'`);
-  //         _params.push(..._assignment.slice(1));
-  //       } else if (typeof _assignment === 'string') assignment = _assignment;
-  //       else if (_assignment == null) continue;
-  //       else throw TypeError(`A value of ${getClassNameOrType(_assignment)} is not valid for the return value of '${inputName}', allowed: 'string' or 'Array'`);
-  //     } else {
-  //       assignment = `${assignmentBuilder} = ?`;
-  //       _params.push(inputValue);
-  //     }
-      
-  //     assignmentList += separator + assignment;
-
-  //     if (!separator) separator = ', ';
-  //   }
-
-  //   return [assignmentList, _params];
-  // }
+  /**
+   * 
+   * @param {object} inputArgs
+   * @param {string | number | boolean | {} | any[]=} inputArgs.
+   * @param {any} [context]
+   * @returns {string}
+   */
   async buildAssignmentList(inputArgs, context) {
+
+    if (inputArgs == null) return '';
+    // validates input arguments
+    if (inputArgs.constructor !== Object)
+      throw TypeError(`The first input argument to the method 'buildAssignmentList' must be an instance of 'Object', but got ${printTypeOrInstance(inputArgs)}.`);
 
     const assignmentList = [], params = [];
     for (const inputName in inputArgs) {
@@ -219,45 +217,40 @@ export class SQLBuilder {
       // if the value of the current argument is not defined, then processing is skipped
       if (inputValue === undefined) continue;
       
-      // gets the assignment builder for the current argument name
+      // gets the assignment builder with the current argument name
       let builder = this.assignmentListBuilder[inputName];
-      // if the current assignment builder does not exist, then it is created dynamically
+      // if the builder does not exist, then it is created dynamically
       if (builder == null) builder = inputName;
 
-      const builderType = builder?.constructor || typeof builder;
-      //if the type of the current builder is not a function or asynchronous function,
-      //then validates  
-      // if (builderType !== Function && builderType !== AsyncFunction) {
-      //   const allowedType = inputValue === null
-      //   || typeof inputValue === 'string'
-      //   || typeof inputValue === 'number'
-      //   || typeof inputValue === 'boolean';
-      //   if (!allowedType) throw TypeError(`A value of ${getClassNameOrType(inputValue)} is not valid for the property '${inputName}' of the argument 'inputArgs' of the function 'buildAssignmentList' , еру ащддщцштп allowed: 'null', 'boolean', 'number', or 'string'`);
-      // }
-
+      const builderType = getTypeOrInstance(builder);
       try {
 
-        let assignment;
+        // if the type of the current builder is a function, then it is expected to return an assignment and, optionally, its parameters
         if (builderType === Function || builderType === AsyncFunction) {
 
-          const _assignment = await builder(inputValue, context);
-          if (_assignment instanceof Array) {
-            assignment = _assignment[0];
-            if (typeof assignment !== 'string') throw TypeError(`A value of ${getClassNameOrType(assignment)} is not valid for the first element returned by the assignment builder '${inputName}', allowed only 'string'`);
-            params.push(..._assignment.slice(1));
-          } else if (typeof _assignment === 'string') assignment = _assignment;
-          else if (_assignment == null) continue;
-          else throw TypeError(`A value of ${getClassNameOrType(_assignment)} is not valid for the return value of '${inputName}', allowed: 'string' or 'Array'`);
+          const assignment = await builder(inputValue, context);
+          //if (assignment == null) continue; else //TODO: check if step is necessary
+          if (assignment instanceof Array) {
+            if (typeof assignment[0] !== 'string')
+              throw TypeError(`The first element of the array that is returned by the builder function must be of type 'string', but got ${printTypeOrInstance(assignment[0])}.`);
+            assignmentList.push(assignment[0]);
+            assignment.slice(1).map(convertParam)
+            |> params.push(...#);
+          }
+          else if (typeof assignment === 'string') assignmentList.push(assignment);
+          else throw TypeError(`The builder function is expected to return an instance of 'Array' or a value of type 'string', but got ${printTypeOrInstance(assignment)}.`);
 
-        } else if (builderType === 'string') {
-          // creates an expression to assign a column with the name of the current builder
-          assignmentList.push(`${builderType} = ?`);
-          convertParam(inputValue) |>
-          params.push(#);
+        }
+        // if the type of the current builder is a string, then it is used as the column name
+        // if the current builder was not created dynamically, then the argument name is an alias for the column name
+        else {
+          assignmentList.push(`${builder} = ?`);
+          convertParam(inputValue)
+          |> params.push;
         }
 
       } catch(error) {
-        throw new TypeError(`An error has occurred while trying to build assignment for argument name ${inputName} of type ${builderType}. ${error.message}`);
+        throw new TypeError(`An error occurred while trying to build an assignment for an argument named ${inputName}. ${error.message}`);
       }
       
     }
@@ -266,12 +259,16 @@ export class SQLBuilder {
   }
 }
 
+function putInParentheses(predicate) {
+  return '(' + predicate + ')';
+}
+
 function convertParam(param) {
   if (param === null) return null;
   if (param instanceof Object) {
     if (param.constructor === Object || param.constructor === Array) return JSON.stringify(param);
-    //if (param.constructor === Date) return param;
-    throw new TypeError(`Invalid param type: ${param.constructor}`);
+    //if (param.constructor === Date) return param; //TODO: check if step is necessary
+    throw new TypeError(`The parameter must be one of the following types: 'null', 'boolean', 'number', 'string'; or instances: 'Object' or 'Array', but got ${printTypeOrInstance(param)}.`);
   }
   return param;
 }
