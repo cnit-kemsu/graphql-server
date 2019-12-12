@@ -72,8 +72,8 @@ export class SQLBuilder {
     for (const predicate in whereConditionBuilder) {
       const builder = whereConditionBuilder[predicate];
       const builderType = getTypeOrInstance(builder);
-      if ( builderType === Function
-        || builderType === 'string'
+      if (builderType !== Function
+        && builderType !== 'string'
       ) throw TypeError(`The predicate builder must be of type 'string' or an instance of 'Function', but got ${printTypeOrInstance(builder)}.`);
       this.whereConditionBuilder[predicate] = builder;
     }
@@ -83,9 +83,9 @@ export class SQLBuilder {
     for (const assignment in assignmentListBuilder) {
       const builder = assignmentListBuilder[assignment];
       const builderType = getTypeOrInstance(builder);
-      if (builderType === Function
-        || builderType === AsyncFunction
-        || builderType === 'string'
+      if (builderType !== Function
+        && builderType !== AsyncFunction
+        && builderType !== 'string'
       ) throw TypeError(`The assignment builder must be of type 'string' or one of the following instances: 'Function' or 'AsyncFunction', but got ${printTypeOrInstance(builder)}.`);
       this.assignmentListBuilder[assignment] = builder;
     }
@@ -130,7 +130,7 @@ export class SQLBuilder {
 
   /**
    * @param {object} filters
-   * @param {string | number | boolean | (string | number | boolean)[]=} filters.
+   * @param {string | number | boolean | {} | (string | number | boolean | {} | any[])[]=} filters.
    * @param {string[]} [extraPredicates]
    * @returns {string}
    */
@@ -140,10 +140,10 @@ export class SQLBuilder {
     // validates input arguments
     if (filters.constructor !== Object)
       throw TypeError(`The first input argument to the method 'buildWhereClause' must be an instance of 'Object', but got ${printTypeOrInstance(filters)}.`);
-    if (extraPredicates?.constructor !== Array)
+    if (extraPredicates != null && extraPredicates.constructor !== Array)
       throw TypeError(`The second input argument to the method 'buildWhereClause' must be an instance of 'Array', but got ${printTypeOrInstance(extraPredicates)}.`);
 
-    const predicates = [], params = [];
+    const predicateList = [], params = [];
     for (const filterName in filters) {
       
       const filterValue = filters[filterName];
@@ -157,30 +157,35 @@ export class SQLBuilder {
       const builderType = getTypeOrInstance(builder);
       try {
 
-        const isMultipleParameterized = filterValue instanceof Array;
-        if (!isMultipleParameterized && filterValue instanceof Object)
-          throw TypeError(`The filter must be an instance of 'Array' or one of the following types: 'null', 'boolean', 'number', 'string', but got ${printTypeOrInstance(filterValue)}.`);
-        if (isMultipleParameterized) for (const index in filterValue) {
-          const elementType = getTypeOrInstance(filterValue[index]);
-          if (elementType !== null
-            || elementType !== 'string'
-            || elementType !== 'number'
-            || elementType !== 'boolean'
-          ) throw TypeError(`Each filter element must be one of the following types: 'null', 'boolean', 'number', 'string', but got ${printTypeOrInstance(elementType)}.`);
-        }
-
-        const substitution = isMultipleParameterized ? new Array(filterValue.length).fill('?').join(', ') : '?';
-
         if (builderType === Function) {
-          builder(substitution)
-          |> predicates.push;
-        } else {
-          isMultipleParameterized ? ` IN (${substitution})` : ` = ${substitution}`
-          |> predicates.push(filterName + #);
-        }
 
-        if (isMultipleParameterized) params.push(...filterValue);
-        else params.push(filterValue);
+          const predicate = builder(filterValue);
+          if (predicate instanceof Array) {
+            if (typeof predicate[0] !== 'string')
+              throw TypeError(`The first element of the array that is returned by the builder function must be of type 'string', but got ${printTypeOrInstance(predicate[0])}.`);
+            predicateList.push(predicate[0]);
+            predicate.slice(1).map(convertParam)
+            |> params.push(...#);
+          }
+          else if (typeof predicate === 'string') predicateList.push(predicate);
+          else throw TypeError(`The builder function is expected to return an instance of 'Array' or a value of type 'string', but got ${printTypeOrInstance(predicate)}.`);
+
+        } else {
+
+          if (filterValue instanceof Array) {
+            new Array(filterValue.length).fill('?').join(', ')
+            |> predicateList.push(`${filterName} IN (${#})`);
+            filterValue.map(convertParam)
+            |> params.push(...#);
+          } else if (filterValue instanceof Object) {
+            throw TypeError(`The filter must be an instance of 'Array' or one of the following types: 'null', 'boolean', 'number', 'string', but got ${printTypeOrInstance(filterValue)}.`);
+          } else {
+            predicateList.push(`${filterName} = ?`);
+            convertParam(filterValue)
+            |> params.push;
+          }
+
+        }
 
       } catch(error) {
         throw new TypeError(`An error occurred while trying to build a predicate for a filter named ${filterName}. ${error.message}`);
@@ -190,10 +195,10 @@ export class SQLBuilder {
 
     if (extraPredicates != null) for (const predicate of extraPredicates) {
       if (typeof predicate !== 'string') throw TypeError(`Each extra predicate must be of type 'string', but one is ${printTypeOrInstance(predicate)}.`);
-      predicates.push(predicate);
+      predicateList.push(predicate);
     }
 
-    return [predicates.length === 0 ? '' : 'WHERE ' + predicates.map(putInParentheses).join(' AND '), params];
+    return [predicateList.length === 0 ? '' : 'WHERE ' + predicateList.map(putInParentheses).join(' AND '), params];
   }
 
   /**
