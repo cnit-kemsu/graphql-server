@@ -83,14 +83,14 @@
 // const pool = new Pool(dbConfig);
 
 //let name = 'course';
-let name = `course%'; \ SELECT'' \\' sd ' \ \\ * FROM users; % \n \\n SELECT * FROM course_design_templates WHERE _name LIKE \\'%course`;
-console.log(name |> JSON.stringify);
-console.log(name);
-name = name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-//name = name.match(/[^\\]'/g);
-const res = name.match(/^(?!\\)(')/g);
+// let name = `course%'; \ SELECT'' \\' sd ' \ \\ * FROM users; % \n \\n SELECT * FROM course_design_templates WHERE _name LIKE \\'%course`;
+// console.log(name |> JSON.stringify);
+// console.log(name);
+// name = name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+// //name = name.match(/[^\\]'/g);
+// const res = name.match(/^(?!\\)(')/g);
 
-console.log(name);
+// console.log(name);
 //console.log(res);
 
 // async function test() {
@@ -102,3 +102,34 @@ console.log(name);
 // }
 
 // test();
+
+const _str = '\\\'qwerty\\\' \'asdfgh\' \'\'123456';
+let str = '';
+for (let index = 0; index < 80; index++) {
+  str += ' ' + _str;
+}
+
+let start = process.hrtime();
+
+let str2 = '';
+str2 = str.replace(/(?<!\\)'/g, '\\\'');
+//str2 = str.match(/'/g);
+
+let time = process.hrtime(start);
+console.log(time);
+
+start = process.hrtime();
+
+let str1 = '';
+
+for (let index = 1; index < str.length - 1; index++) {
+  if (str[index] == '\'' && str[index - 1] != '\\') {
+    str1 += '\\\'';
+  } else str1 += str[index];
+}
+
+time = process.hrtime(start);
+console.log(time);
+
+// console.log(str2);
+// console.log(str1);
