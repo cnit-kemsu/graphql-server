@@ -1,33 +1,39 @@
 import { SQLBuilder } from './';
 import { escape, escapePattern } from './escape';
+import { getJSON, setJSON } from './sql-json';
 
+const selectExprListBuilder = {
+  firstname: getJSON('_date', 'firstname'),
+  lastname: getJSON('_date', 'lastname'),
+  email: '_email',
+  summary: 'get_value(summary_value_id)',
+  friends: ['id']
+};
 
-const sum = (a, b) => a + b;
-test('lalatest', () => {
-  //expect(sum(1, 1)).toBe(3);
+function searchWord(word) {
+  return `%${escapePattern(word)}%`
+  |> escape
+  |> `(firstname LIKE ${#}) OR lastname LIKE ${#})`;
+}
 
-  const selectExprListBuilder = {
-    name: '_name',
-    surname: null,
-    email: 'email',
-    friendsKeys() { return '(SELECT id FROM friends WHERE person_1 = id)'; },
-    school: { schoolId: 'school_id', city: null },
-    city({ cityId = 1 }) { return [`(SELECT name FROM cities WHERE id = ?)`, cityId]; },
-  };
-  
-  const whereConditionBuilder = {
-    name: '_name',
-    middlename: 'middlename1',
-    //surname: null,
-    cityId(cityId) { return [`city_id != ?`, cityId]; },
-    schoolId(schoolId) { return [`schoolId != ?`, schoolId]; },
-  };
-  
-  const assignmentListBuilder = {
-    name: '_name',
-    //surname: null,
-    async schoolId({ schoolId }) { return ['school_id = ?, city_id = (SELECT city_id FROM schools WHERE school_id = ?)', schoolId, schoolId]; }
-  };
+const whereConditionBuilder = {
+  email: value => `_email = ${escape(value)}`,
+  keys: values => `id IN (${values.join(', ')})`,
+  searchText: text => text
+    .trim().replace(/\s{2,}/g, '')
+    .split(' ')
+    .map(searchWord)
+    .join(' AND ')
+
+};
+
+const assignmentListBuilder = {
+  email: value => `_email = ${escape(value)}`,
+  data: value => setJSON('_data', value),
+  summary: value => `summary_value_id = set_value(id, ${escape(value)}, NULL)`
+};
+
+test('test', () => {
   
   const sqlBuilder = new SQLBuilder(selectExprListBuilder, whereConditionBuilder, assignmentListBuilder);
   const whereClause = sqlBuilder.buildWhereClause({ name: 'lalala', middlename: ['eee1', 'uuu1'], surname: ['eee', 'uuu'], email: 'qwerty', cityId: 2, schoolId: ['1', 'a'] });
@@ -49,29 +55,3 @@ test('lalatest', () => {
 //   console.log(assignmentList);
 // })()
 
-function searchWord(word) {
-  return `%${escapePattern(word)}%`
-  |> escape
-  |> `(firstname LIKE ${#}) OR lastname LIKE ${#})`;
-}
-
-const whereBuilder = {
-  prop1: '_prop1',
-  prop2: name => ['name = ?', name],
-  // prop3: (name1, name2) => [
-  //   plh => [`name1 = ${plh}`, name1],
-  //   plh => [`name2 = ${plh}`, name2]
-  // ],
-  prop4: (name1, name2) => [
-    [fill => `name1 = ${fill('?', ', ')}`, name1],
-    [ph => `name2 = ${ph}`, name2]
-  ],
-  email: value => `email = '${escape(value)}'`,
-  keys: values => `id IN (${values.join(', ')})`,
-  searchText: text => text
-    .trim().replace(/\s{2,}/g, '')
-    .split(' ')
-    .map(searchWord)
-    .join(' AND ')
-
-};
