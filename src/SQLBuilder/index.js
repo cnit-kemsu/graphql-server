@@ -1,7 +1,7 @@
 function printTypeOrInstance(value) {
   if (value === undefined) return `'undefined'`;
   if (value === null) return `'null'`;
-  return value instanceof Object ? `instance of '${value.constructor.name}'`: `type '${typeof value}'`;
+  return value instanceof Object ? `an instance of '${value.constructor.name}'`: `of type '${typeof value}'`;
 }
 
 function putInParentheses(predicate) {
@@ -12,22 +12,38 @@ const AsyncFunction = Object.getPrototypeOf(async function() {}).constructor;
 
 export class SQLBuilder {
 
-  constructor(selectExprListBuilder, whereConditionBuilder, assignmentListBuilder) {
+  constructor(selectExprListBuilder = {}, whereConditionBuilder = {}, assignmentListBuilder = {}) {
 
     // validates selectExprListBuilder
     this.selectExprListBuilder = {};
     for (const builderName in selectExprListBuilder) {
       const builder = selectExprListBuilder[builderName];
+
+      // validates builder
       if (typeof builder !== 'string' && builder?.constructor !== Function) {
-        if (builder?.constructor !== Array) throw TypeError(`The select expression builder named '${builderName}' must be of type 'string' or an instance of 'Array' or 'Function', but got ${printTypeOrInstance(builder)}.`);
-        for (const index in builder) {
-          const requestedField = builder[index];
-          if (typeof requestedField !== 'string') throw TypeError(`The requested field with index '${index}' of the select expression builder named '${builderName}' must be of type 'string', but got ${printTypeOrInstance(requestedField)}.`);
-          const _builder = selectExprListBuilder[builderName];
-          if (_builder === undefined) throw TypeError(`A builder named '${requestedField}' specified in the requested field with index '${index}' of the select expression builder named '${builderName}' does not exist.`);
-          if (_builder?.constructor === Array) throw TypeError(`The requested field with index '${index}' of the select expression builder named '${builderName}' cannot be the builder that is an instance of 'Array'.`);
+        if (builder?.constructor !== Array)
+          throw TypeError(`The select expression builder named '${builderName}' must be of type 'string' or an instance of 'Array' or 'Function', but it is ${printTypeOrInstance(builder)}.`);
+        
+        // validates requested builders
+        try {
+
+          for (const index in builder) {
+
+            const requestedBuilderName = builder[index];
+            if (typeof requestedBuilderName !== 'string')
+              throw TypeError(`The requested builder name with index '${index}' must be of type 'string', but it is ${printTypeOrInstance(requestedBuilderName)}.`);
+
+            const requestedBuilder = selectExprListBuilder[requestedBuilderName];
+            if (requestedBuilder === undefined) throw TypeError(`The requested builder named '${requestedBuilderName}' does not exist.`);
+            if (requestedBuilder?.constructor === Array) throw TypeError(`The requested builder named '${requestedBuilderName}' cannot be the builder that is an instance of 'Array'.`);
+          }
+
+        } catch (error) {
+          throw TypeError(`Invalid select expression builder named '${builderName}'. ${error.message}'`);
         }
+
       }
+
       this.selectExprListBuilder[builderName] = builder;
     }
 
@@ -35,7 +51,8 @@ export class SQLBuilder {
     this.whereConditionBuilder = {};
     for (const builderName in whereConditionBuilder) {
       const builder = whereConditionBuilder[builderName];
-      if (builder?.constructor !== Function) throw TypeError(`The predicate builder named '${builderName}' must be an instance of 'Function', but got ${printTypeOrInstance(builder)}.`);
+      if (builder?.constructor !== Function)
+        throw TypeError(`The predicate builder named '${builderName}' must be an instance of 'Function', but it is ${printTypeOrInstance(builder)}.`);
       this.whereConditionBuilder[builderName] = builder;
     }
 
@@ -44,8 +61,8 @@ export class SQLBuilder {
     for (const builderName in assignmentListBuilder) {
       const builder = assignmentListBuilder[builderName];
       if (builder?.constructor
-        |> # !== Function || # !== AsyncFunction
-      ) throw TypeError(`The assignment builder named '${builderName}' must be an instance of 'Function' or 'AsyncFunction', but got ${printTypeOrInstance(builder)}.`);
+        |> # !== Function && # !== AsyncFunction
+      ) throw TypeError(`The assignment builder named '${builderName}' must be an instance of 'Function' or 'AsyncFunction', but it is ${printTypeOrInstance(builder)}.`);
       this.assignmentListBuilder[builderName] = builder;
     }
 
@@ -54,16 +71,31 @@ export class SQLBuilder {
     this.buildAssignmentList = this.buildAssignmentList.bind(this);
   }
 
+  /**
+   * @param {object} requestedFields
+   * @param {any=} requestedFields.
+   * @param {string[]} [extraPredicates]
+   * @returns {string}
+   */
   buildSelectExprList(requestedFields, params) {
+
+    if (requestedFields == null) return '*';
+    // validates arguments
+    if (requestedFields.constructor !== Object)
+      throw TypeError(`The first argument to the method 'buildSelectExprList' must be an instance of 'Object', but it is ${printTypeOrInstance(requestedFields)}.`);
 
     const _requestedFields = {};
     for (const fieldName in requestedFields) {
       const field = requestedFields[fieldName];
-      if (typeof field !== 'string' && field?.constructor !== Object) throw TypeError(`The requested field named '${fieldName}' must be value of 'null' or an instance of 'Object', but got ${printTypeOrInstance(field)}.`);
+
+      if (field !== null && typeof field !== 'string' && field?.constructor !== Object)
+        throw TypeError(`The requested field named '${fieldName}' must be value of 'null' or an instance of 'Object', but it is ${printTypeOrInstance(field)}.`);
+      
       const builder = this.selectExprListBuilder[fieldName];
-      if (builder == null) throw TypeError(`An select expression builder named '${fieldName}' does not exist.`);
+      if (builder == null) throw TypeError(`A select expression builder named '${fieldName}' does not exist.`);
+
       if (builder?.constructor !== Array) _requestedFields[fieldName] = null;
-      else for (const _fieldName of builder) _requestedFields[_fieldName] = null;
+      else for (const requestedBuilderName of builder) _requestedFields[requestedBuilderName] = null;
     }
 
     const selectExprList = [];
@@ -73,11 +105,12 @@ export class SQLBuilder {
 
       try {
 
-        const selectExpr = (builder instanceof Array ?  builder(params) : builder) + ' AS ' + fieldName;
+        const selectExpr = builder instanceof Function ?  builder(params) : builder
+        |> fieldName === # && fieldName || `${#} AS ${fieldName}`;
         selectExprList.push(selectExpr);
 
       } catch(error) {
-        throw new TypeError(`An error occurred while trying to build a select expression for a field named ${fieldName}. ${error.message}`);
+        throw error.constructor(`An error occurred while trying to build a select expression for a field named '${fieldName}'. ${error.message}`);
       }
       
     }
@@ -87,7 +120,7 @@ export class SQLBuilder {
 
   /**
    * @param {object} filters
-   * @param {any} filters.
+   * @param {any=} filters.
    * @param {string[]} [extraPredicates]
    * @returns {string}
    */
@@ -95,12 +128,15 @@ export class SQLBuilder {
 
     if (filters == null) return '';
     // validates arguments
-    if (filters.constructor !== Object) throw TypeError(`The first argument to the method 'buildWhereClause' must be an instance of 'Object', but got ${printTypeOrInstance(filters)}.`);
+    if (filters.constructor !== Object)
+      throw TypeError(`The first argument to the method 'buildWhereClause' must be an instance of 'Object', but it is ${printTypeOrInstance(filters)}.`);
     if (extraPredicates != null) {
-      if (extraPredicates.constructor !== Array) throw TypeError(`The second argument to the method 'buildWhereClause' must be an instance of 'Array', but got ${printTypeOrInstance(extraPredicates)}.`);
+      if (extraPredicates.constructor !== Array)
+        throw TypeError(`The second argument to the method 'buildWhereClause' must be an instance of 'Array', but it is ${printTypeOrInstance(extraPredicates)}.`);
       for (const index in extraPredicates) {
         const predicate = extraPredicates[index];
-        if (typeof predicate !== 'string') throw TypeError(`An extra predicate with index '${index}' must be of type 'string', but got ${printTypeOrInstance(predicate)}.`);
+        if (predicate !== null && typeof predicate !== 'string')
+          throw TypeError(`An extra predicate with index '${index}' must be of type 'string', but it is ${printTypeOrInstance(predicate)}.`);
       }
     }
 
@@ -117,11 +153,14 @@ export class SQLBuilder {
       try {
 
         const predicate = builder(filterValue);
-        if (typeof predicate !== 'string') throw TypeError(`The result returned by the predicate builder must be of type 'string', but got ${printTypeOrInstance(predicate)}.`);
+        if (!predicate) continue;
+        
+        if (typeof predicate !== 'string')
+          throw TypeError(`The result returned by the predicate builder must be of type 'string', but it is ${printTypeOrInstance(predicate)}.`);
         predicateList.push(predicate);
 
       } catch(error) {
-        throw new TypeError(`An error occurred while trying to build a predicate for a filter named ${filterName}. ${error.message}`);
+        throw error.constructor(`An error occurred while trying to build a predicate for a filter named '${filterName}'. ${error.message}`);
       }
       
     }
@@ -134,9 +173,8 @@ export class SQLBuilder {
   }
 
   /**
-   * 
    * @param {object} inputArgs
-   * @param {any} inputArgs.
+   * @param {any=} inputArgs.
    * @param {any} [context]
    * @returns {string}
    */
@@ -144,7 +182,7 @@ export class SQLBuilder {
 
     if (inputArgs == null) return '';
     // validates arguments
-    if (inputArgs.constructor !== Object) throw TypeError(`The first argument to the method 'buildAssignmentList' must be an instance of 'Object', but got ${printTypeOrInstance(inputArgs)}.`);
+    if (inputArgs.constructor !== Object) throw TypeError(`The first argument to the method 'buildAssignmentList' must be an instance of 'Object', but it is ${printTypeOrInstance(inputArgs)}.`);
 
     const assignmentList = [];
     for (const inputName in inputArgs) {
@@ -159,11 +197,11 @@ export class SQLBuilder {
       try {
 
         const assignment = await builder(inputValue, context);
-        if (typeof assignment !== 'string') throw TypeError(`The result returned by the assignment builder must be of type 'string', but got ${printTypeOrInstance(assignment)}.`);
+        if (typeof assignment !== 'string') throw TypeError(`The result returned by the assignment builder must be of type 'string', but it is ${printTypeOrInstance(assignment)}.`);
         assignmentList.push(assignment);
 
       } catch(error) {
-        throw new TypeError(`An error occurred while trying to build an assignment for an input argument named ${inputName}. ${error.message}`);
+        throw error.constructor(`An error occurred while trying to build an assignment for an input argument named '${inputName}'. ${error.message}`);
       }
       
     }

@@ -21,6 +21,7 @@
  */
 
 export function escape(value) {
+  if (value === null) return 'NULL';
   return JSON.stringify(value);
 }
 
