@@ -4,15 +4,11 @@ export function escape(value) {
 }
 
 export function escapePattern(value, pattern) {
-  return value.replace(/(%|_)/g, '$1$1')
+  return value.replace(/(%|_)/g, '?$1')
   |> pattern
   |> JSON.stringify
-  |> #.replace(/%%/g, '\\%')
-  |> #.replace(/__/g, '\\_');
+  |> #.replace(/\?(%|_)/g, '\\$1');
 }
-
-const pattern = word =>  `%${word}%`;
-escapePattern(`a%sd`, pattern) |> console.log;
 
 //.replace(/(?<!\\)'/g, '\\\''); // finds all `'` (but not `\'`) and replaces with `\'`
 //.replace(/(\\|'|")/g, '\\$1'); // finds all `\`, `'` or `"` and adds `\` to it
