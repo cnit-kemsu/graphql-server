@@ -1,12 +1,25 @@
+import { printTypeOrInstance } from './printTypeOrInstance';
+
+/**
+ * @param {any} value 
+ */
 export function escape(value) {
   if (value === null) return 'NULL';
   return JSON.stringify(value);
 }
 
+/**
+ * @param {string} value 
+ * @param {Function} pattern 
+ */
 export function escapePattern(value, pattern) {
-  return value.replace(/(%|_)/g, '?$1')
-  |> pattern
-  |> JSON.stringify
+
+  if (typeof value !== 'string') throw TypeError(`The first argument to escapePattern function must be of type 'string', but it is ${printTypeOrInstance(value)}.`);
+  const _temp = value.replace(/(%|_)/g, '?$1')
+  |> pattern;
+
+  if (typeof _temp !== 'string') throw TypeError(`Function that is the second argument to escapePattern function must return value of type 'string', but it is ${printTypeOrInstance(_temp)}.`);
+  return JSON.stringify(_temp)
   |> #.replace(/\?(%|_)/g, '\\$1');
 }
 
