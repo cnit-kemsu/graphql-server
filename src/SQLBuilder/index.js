@@ -105,9 +105,11 @@ export class SQLBuilder {
 
       try {
 
-        const selectExpr = builder instanceof Function ?  builder(params) : builder
-        |> fieldName === # && fieldName || `${#} AS ${fieldName}`;
-        selectExprList.push(selectExpr);
+        const selectExpr = builder instanceof Function ? builder(params) : builder;
+        if (typeof selectExpr !== 'string')
+          throw TypeError(`The result returned by the select expression builder must be of type 'string', but it is ${printTypeOrInstance(selectExpr)}.`);
+        (fieldName === selectExpr ? fieldName : `${selectExpr} AS ${fieldName}`)
+        |> selectExprList.push(#);
 
       } catch(error) {
         throw error.constructor(`An error occurred while trying to build a select expression for a field named '${fieldName}'. ${error.message}`);

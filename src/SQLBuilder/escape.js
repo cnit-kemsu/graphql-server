@@ -1,3 +1,19 @@
+export function escape(value) {
+  if (value === null) return 'NULL';
+  return JSON.stringify(value);
+}
+
+export function escapePattern(value, pattern) {
+  return value.replace(/(%|_)/g, '$1$1')
+  |> pattern
+  |> JSON.stringify
+  |> #.replace(/%%/g, '\\%')
+  |> #.replace(/__/g, '\\_');
+}
+
+const pattern = word =>  `%${word}%`;
+escapePattern(`a%sd`, pattern) |> console.log;
+
 //.replace(/(?<!\\)'/g, '\\\''); // finds all `'` (but not `\'`) and replaces with `\'`
 //.replace(/(\\|'|")/g, '\\$1'); // finds all `\`, `'` or `"` and adds `\` to it
 
@@ -19,12 +35,3 @@
  * \%
  * \_
  */
-
-export function escape(value) {
-  if (value === null) return 'NULL';
-  return JSON.stringify(value);
-}
-
-export function escapePattern(value) {
-  return value.replace(/(%|_)/g, '\\$1');
-}

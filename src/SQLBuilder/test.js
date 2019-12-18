@@ -77,12 +77,13 @@ const selectExprListBuilder = {
   friends: ['id'],
   _error: () => {
     throw new Error('Test error');
-  }
+  },
+  _invalid: () => 1
 };
 
+const pattern = word =>  `%${word}%`;
 function searchWord(word) {
-  return `%${escapePattern(word)}%`
-  |> escape
+  return escapePattern(word, pattern)
   |> `(firstname LIKE ${#} OR lastname LIKE ${#})`;
 }
 
@@ -90,19 +91,24 @@ const whereConditionBuilder = {
   email: value => `_email = ${escape(value)}`,
   keys: values => values.length > 0 ? `id IN (${values.join(', ')})` : null,
   searchText: text => text
-    .trim().replace(/\s{2,}/g, '')
+    .trim().replace(/\s{2,}/g, ' ')
     .split(' ')
     .map(searchWord)
     .join(' AND '),
   _error: () => {
     throw new Error('Test error');
-  }
+  },
+  _invalid: () => ({})
 };
 
 const assignmentListBuilder = {
-  email: value => `_email = ${escape(value)}`,
+  email: async value => await `_email = ${escape(value)}`,
   data: value => setJSON('_data', value),
-  summary: value => `summary_value_id = set_value(id, ${escape(value)}, NULL)`
+  summary: value => `summary_value_id = set_value(summary_value_id, ${escape(value)}, NULL)`,
+  _error: () => {
+    throw new Error('Test error');
+  },
+  _invalid: async () => await []
 };
 
 const sqlBuilder = new SQLBuilder(selectExprListBuilder, whereConditionBuilder, assignmentListBuilder);
@@ -166,9 +172,9 @@ test(`An error occurs inside select expression builder`, () => {
     .toThrowError(`An error occurred while trying to build a select expression for a field named '_error'. Test error`);
 });
 
-test(`An error occurs inside select expression builder`, () => {
-  expect(() => sqlBuilder.buildSelectExprList({ _error: null }))
-    .toThrowError(`An error occurred while trying to build a select expression for a field named '_error'. Test error`);
+test(`Invalid type of value returned by select expression builder`, () => {
+  expect(() => sqlBuilder.buildSelectExprList({ _invalid: null }))
+    .toThrowError(`An error occurred while trying to build a select expression for a field named '_invalid'. The result returned by the select expression builder must be of type 'string', but it is of type 'number'.`);
 });
 
 test(`Test select expression list builder 1`, () => {
@@ -193,24 +199,51 @@ test(`An error occurs inside where condition builder`, () => {
     .toThrowError(`An error occurred while trying to build a predicate for a filter named '_error'. Test error`);
 });
 
+test(`Invalid type of value returned by where condition builder`, () => {
+  expect(() => sqlBuilder.buildWhereClause({ _invalid: 1 }))
+    .toThrowError(`An error occurred while trying to build a predicate for a filter named '_invalid'. The result returned by the predicate builder must be of type 'string', but it is an instance of 'Object'.`);
+});
+
 test(`Test where clause builder 1`, () => {
   expect(sqlBuilder.buildWhereClause({ email: 'john@email.com', keys: [1, 2], searchText: undefined }))
     .toBe(`WHERE (_email = "john@email.com") AND (id IN (1, 2))`);
 });
 
 test(`Test where clause builder 2`, () => {
-  expect(sqlBuilder.buildWhereClause({ email: null, keys: [], searchText: 'cooper j' }))
-    .toBe(`WHERE (_email = NULL) AND ((firstname LIKE "%cooper%" OR lastname LIKE "%cooper%") AND (firstname LIKE "%j%" OR lastname LIKE "%j%"))`);
+  expect(sqlBuilder.buildWhereClause({ email: null, keys: [], searchText: `"co\\op%er\\"  '\\%\\_j_'` }))
+    .toBe(`WHERE (_email = NULL) AND ((firstname LIKE "%\\"co\\\\op\\%er\\\\\\"%" OR lastname LIKE "%\\"co\\\\op\\%er\\\\\\"%") AND (firstname LIKE "%'\\\\\\%\\\\\\_j\\_'%" OR lastname LIKE "%'\\\\\\%\\\\\\_j\\_'%"))`);
 });
 
 // tests results of assignment list builder
 
-// test(`Test assignment list builder 1`, () => {
-//   expect(sqlBuilder.buildAssignmentList({ email: 'john@email.com', keys: [1, 2], searchText: undefined }))
-//     .toBe(`WHERE (_email = "john@email.com") AND (id IN (1, 2))`);
-// });
+it(`An error occurs inside assignment builder`, async () => {
+  try {
+    await sqlBuilder.buildAssignmentList({ _error: 1 });
+  } catch (error) {
+    expect(error.message).toBe(`An error occurred while trying to build an assignment for an input argument named '_error'. Test error`);
+  }
+});
 
-// test(`Test assignment list builder 2`, () => {
-//   expect(sqlBuilder.buildAssignmentList({ email: null, keys: [], searchText: 'cooper j' }))
-//     .toBe(`WHERE (_email = NULL) AND ((firstname LIKE "%cooper%" OR lastname LIKE "%cooper%") AND (firstname LIKE "%j%" OR lastname LIKE "%j%"))`);
-// });
+it(`Invalid type of value returned by assignment builder`, async () => {
+  try {
+    await sqlBuilder.buildAssignmentList({ _invalid: 1 });
+  } catch (error) {
+    expect(error.message).toBe(`An error occurred while trying to build an assignment for an input argument named '_invalid'. The result returned by the assignment builder must be of type 'string', but it is an instance of 'Array'.`);
+  }
+});
+
+it(`Test assignment builder 1`, async () => {
+  await sqlBuilder.buildAssignmentList({ email: 'john@email.com' })
+  |> expect(#).toBe(`_email = "john@email.com"`);
+});
+
+it(`Test assignment builder 2`, async () => {
+  await sqlBuilder.buildAssignmentList({ data: { firstname: 'john', lastname: 'cooper' }, summary: `'john' "cooper"` })
+  |> expect(#).toBe(`_data = JSON_SET(IF(_data IS NULL, '{}', _data), '$.firstname', "john", '$.lastname', "cooper"), summary_value_id = set_value(summary_value_id, "'john' \\"cooper\\"", NULL)`);
+});
+
+
+it(`Test assignment builder 3`, async () => {
+  await sqlBuilder.buildAssignmentList({ email: 'john@email.com', data: { firstname: null, lastname: `'text' "text"` }, summary: 'text...' })
+  |> expect(#).toBe(`_email = "john@email.com", _data = JSON_SET(IF(_data IS NULL, '{}', _data), '$.firstname', NULL, '$.lastname', "'text' \\"text\\""), summary_value_id = set_value(summary_value_id, "text...", NULL)`);
+});

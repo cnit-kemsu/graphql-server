@@ -1,6 +1,8 @@
 export { types } from './src/graphql/types';
 export { resolveJSON } from './src/graphql/resolvers';
-export { SQLBuilder, jsonArray } from './src/SQLBuilder';
+export { SQLBuilder } from './src/SQLBuilder';
+export { escape, escapePattern } from './src/SQLBuilder/escape';
+export { getJSON, setJSON, jsonArray } from './src/SQLBuilder/sql-json';
 export { upgradeResolveFn } from './src/graphql/upgradeResolveFn';
 export { Loader } from './src/Loader';
 export { collation } from './src/Loader/collation';
