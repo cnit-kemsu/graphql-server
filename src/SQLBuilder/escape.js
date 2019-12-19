@@ -23,6 +23,12 @@ export function escapePattern(value, pattern) {
   |> #.replace(/\?(%|_)/g, '\\$1');
 }
 
+export function jsonToString(value) {
+  if (value === null) return 'NULL';
+  return JSON.stringify(value)
+  |> JSON.stringify;
+}
+
 //.replace(/(?<!\\)'/g, '\\\''); // finds all `'` (but not `\'`) and replaces with `\'`
 //.replace(/(\\|'|")/g, '\\$1'); // finds all `\`, `'` or `"` and adds `\` to it
 
