@@ -122,7 +122,7 @@ export class SQLBuilder {
    * @param {string[]} [extraPredicates]
    * @returns {string}
    */
-  buildWhereClause(filters, extraPredicates) {
+  buildWhereClause(filters, extraPredicates, params) {
 
     if (filters == null) return '';
     // validates arguments
@@ -150,7 +150,7 @@ export class SQLBuilder {
 
       try {
 
-        const predicate = builder(filterValue);
+        const predicate = builder(filterValue, params);
         if (!predicate) continue;
         
         if (typeof predicate !== 'string')
