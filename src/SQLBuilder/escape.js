@@ -29,6 +29,14 @@ export function jsonToString(value) {
   |> JSON.stringify;
 }
 
+/**
+ * 
+ * @param {Date} date 
+ */
+export function dateToString(date) {
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+}
+
 //.replace(/(?<!\\)'/g, '\\\''); // finds all `'` (but not `\'`) and replaces with `\'`
 //.replace(/(\\|'|")/g, '\\$1'); // finds all `\`, `'` or `"` and adds `\` to it
 
