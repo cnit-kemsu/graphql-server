@@ -10,7 +10,7 @@ export function userInfo(secret) {
       |> # && #.replace('Bearer ', '');
   
     try {
-      req.user = jwt.verify(token, secret);
+      req.userId = jwt.verify(token, secret);
     } catch(error) {
       //
     } finally {
