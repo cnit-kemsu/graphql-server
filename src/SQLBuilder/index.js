@@ -16,9 +16,9 @@ export class SQLBuilder {
       const builder = selectExprListBuilder[builderName];
 
       // validates builder
-      if (typeof builder !== 'string' && builder?.constructor !== Function) {
+      if (typeof builder !== 'string' && builder?.constructor !== Function && builder?.constructor !== AsyncFunction) {
         if (builder?.constructor !== Array)
-          throw TypeError(`The select expression builder '${builderName}' must be of type 'string' or an instance of 'Array' or 'Function', but it is ${printTypeOrInstance(builder)}.`);
+          throw TypeError(`The select expression builder '${builderName}' must be of type 'string' or an instance of 'Array', 'Function' or 'AsyncFunction', but it is ${printTypeOrInstance(builder)}.`);
         
         // validates requested builders
         try {
@@ -47,8 +47,8 @@ export class SQLBuilder {
     this.whereConditionBuilder = {};
     for (const builderName in whereConditionBuilder) {
       const builder = whereConditionBuilder[builderName];
-      if (builder?.constructor !== Function)
-        throw TypeError(`The predicate builder '${builderName}' must be an instance of 'Function', but it is ${printTypeOrInstance(builder)}.`);
+      if (builder?.constructor !== Function && builder?.constructor !== AsyncFunction)
+        throw TypeError(`The predicate builder '${builderName}' must be an instance of 'Function' or 'AsyncFunction', but it is ${printTypeOrInstance(builder)}.`);
       this.whereConditionBuilder[builderName] = builder;
     }
 
@@ -73,7 +73,7 @@ export class SQLBuilder {
    * @param {string[]} [extraPredicates]
    * @returns {string}
    */
-  buildSelectExprList(requestedFields, params) {
+  async buildSelectExprList(requestedFields, params) {
 
     if (requestedFields == null) return '*';
     // validates arguments
@@ -101,7 +101,7 @@ export class SQLBuilder {
 
       try {
 
-        const selectExpr = builder instanceof Function ? builder(params) : builder;
+        const selectExpr = builder instanceof Function ? await builder(params) : builder;
         if (typeof selectExpr !== 'string')
           throw TypeError(`The returned result must be of type 'string', but it is ${printTypeOrInstance(selectExpr)}.`);
         (fieldName === selectExpr ? fieldName : `${selectExpr} AS ${fieldName}`)
@@ -122,7 +122,7 @@ export class SQLBuilder {
    * @param {string[]} [extraPredicates]
    * @returns {string}
    */
-  buildWhereClause(filters, extraPredicates, params) {
+  async buildWhereClause(filters, extraPredicates, params) {
 
     if (filters == null) return '';
     // validates arguments
@@ -150,7 +150,7 @@ export class SQLBuilder {
 
       try {
 
-        const predicate = builder(filterValue, params);
+        const predicate = await builder(filterValue, params);
         if (!predicate) continue;
         
         if (typeof predicate !== 'string')
