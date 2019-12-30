@@ -29,12 +29,22 @@ export function jsonToString(value) {
   |> JSON.stringify;
 }
 
+function _pad(value) {
+  return ('0' + value).slice(-2);
+}
+
 /**
  * 
  * @param {Date} date 
  */
 export function dateToString(date) {
-  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1) |> _pad;
+  const _date = date.getDate() |> _pad;
+  const hours = date.getHours() |> _pad;
+  const minutes = date.getMinutes() |> _pad;
+  const seconds = date.getSeconds() |> _pad;
+  return `${year}-${month}-${_date} ${hours}:${minutes}:${seconds}`;
 }
 
 //.replace(/(?<!\\)'/g, '\\\''); // finds all `'` (but not `\'`) and replaces with `\'`
