@@ -8,6 +8,6 @@ export class SqlError extends Error {
     super(message);
     Object.assign(this, props);
     this.name = 'SqlError';
-    this.params = params.map(removeBufferData);
+    if (params != null) this.params = params.map(removeBufferData);
   }
 }
