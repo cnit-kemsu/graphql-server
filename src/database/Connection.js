@@ -9,13 +9,28 @@ export class Connection {
     this.db = db;
   }
 
+  // async query(sql, params) {
+  //   try {
+  //     return await this.db.query(sql, params)
+  //       |> #;
+  //   } catch({ message, code }) {
+  //     throw new PublicError(
+  //       QUERY_ERROR_MESSAGE.exec(message) |> new SqlError(#[1], { code, sql, params }),
+  //       'Querying database failed',
+  //       ClientInfo.UNEXPECTED_EXCEPTION
+  //     );
+  //   }
+  // }
+
   async query(sql, params) {
+    //console.log(sql);
     try {
       return await this.db.query(sql, params)
         |> #;
     } catch({ message, code }) {
+      const msg = QUERY_ERROR_MESSAGE.exec(message);
       throw new PublicError(
-        QUERY_ERROR_MESSAGE.exec(message) |> new SqlError(#[1], { code, sql, params }),
+        new SqlError(msg ? msg[1] : message, { code, sql, params }),
         'Querying database failed',
         ClientInfo.UNEXPECTED_EXCEPTION
       );

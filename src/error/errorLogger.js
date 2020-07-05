@@ -19,16 +19,16 @@ const viewFile = new Promise(readViewFile);
 
 export async function errorLogger(error, request, responce, next) {
   logError(error);
-  const info = publicInfo(error);
-  const errorView = await viewFile;
+  // const info = publicInfo(error);
+  // const errorView = await viewFile;
   
-  if (request.xhr) responce.status(500).json(info);
-  else {
-    responce.type('text/html');
-    errorView.replace('<%= errorInfo %>',
-      info === undefined ? 'No data' : printError(info)
-    ) |> responce.send(#);
-  }
+  // if (request.xhr) responce.status(500).json(info);
+  // else {
+  //   responce.type('text/html');
+  //   errorView.replace('<%= errorInfo %>',
+  //     info === undefined ? 'No data' : printError(info)
+  //   ) |> responce.send(#);
+  // }
 
-  next();
+  //next();
 }

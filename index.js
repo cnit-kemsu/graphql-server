@@ -1,7 +1,8 @@
 export { types } from './src/graphql/types';
 export { resolveJSON } from './src/graphql/resolvers';
 export { SQLBuilder } from './src/SQLBuilder';
-export { escape, escapePattern, jsonToString, dateToString } from './src/SQLBuilder/escape';
+//export { escape, escapePattern, jsonToString, dateToString } from './src/SQLBuilder/escape';
+export { escape as _escape, escapePattern, jsonToString, dateToString } from './src/SQLBuilder/escape';
 export { getJSON, setJSON } from './src/SQLBuilder/sql-json';
 export { upgradeResolveFn } from './src/graphql/upgradeResolveFn';
 export { Loader } from './src/Loader';
