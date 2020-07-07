@@ -1,7 +1,5 @@
-import fs from 'fs';
 import path from 'path';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
-import { DuplicatesPlugin } from 'inspectpack/plugin';
 
 export default {
   devtool: 'inline-source-map',
@@ -9,7 +7,8 @@ export default {
   cache: true,
   target: 'web',
 
-  entry: './test/App.js',
+  entry: './example/index.js',
+
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].js',
@@ -23,10 +22,9 @@ export default {
         include: [
           'src',
           'node_modules/@kemsu',
-          'test',
+          'example',
         ].map(_ => path.resolve(__dirname, _)),
-        loader: 'babel-loader',
-        options: fs.readFileSync('.babelrc') |> JSON.parse
+        loader: 'babel-loader'
       },
       {
         test: /\.css$/,
@@ -40,10 +38,8 @@ export default {
 
   plugins: [
     new HtmlWebpackPlugin({
-      title: 'graphql-server',
-      template: './test/index.html'
-    }),
-    new DuplicatesPlugin({})
+      template: './example/index.html'
+    })
   ],
 
   optimization: {
@@ -65,7 +61,7 @@ export default {
       '/api': 'http://localhost:8080/graphql',
       '/error': 'http://localhost:8080/error'
     },
-    contentBase: './test/server',
+    contentBase: './example/server',
     historyApiFallback: true,
     watchContentBase: true,
     port: 3000

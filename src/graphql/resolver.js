@@ -1,4 +1,4 @@
-import graphqlHTTP from 'express-graphql';
+import { graphqlHTTP } from 'express-graphql';
 import { customFormatErrorFn } from './formatError';
 
 function sendError(originalError, responce) {

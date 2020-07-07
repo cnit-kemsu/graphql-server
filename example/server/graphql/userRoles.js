@@ -7,8 +7,8 @@ const { buildAssignmentList } = new SQLBuilder({
   userId: 'user_id',
   roleId: 'role_id'
 }, {}, {
-  userId: 'user_id',
-  roleId: 'role_id'
+  userId: value => `user_id = ${value}`,
+  roleId:  value => `role_id = ${value}`
 });
 
 const addRole = {

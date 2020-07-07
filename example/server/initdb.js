@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import mariadb from 'mariadb';
-import { hashPassword } from '../../src/pwdhash';
+import { hashPassword } from '../../src/auth/pwdhash';
 import { dbConfig, superUser } from './config.js';
 
 const dbSchema = path.resolve(__dirname, './schema.sql')

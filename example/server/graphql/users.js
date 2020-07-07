@@ -1,5 +1,5 @@
 import { types as _ } from '../../../src/graphql/types';
-import { SQLBuilder, jsonArray } from '../../../src/SQLBuilder';
+import { SQLBuilder } from '../../../src/SQLBuilder';
 import { upgradeResolveFn } from '../../../src/graphql/upgradeResolveFn';
 import { hashPassword } from '../../../src/auth/pwdhash';
 import { RoleType } from './roles';
@@ -16,18 +16,16 @@ const { buildSelectExprList, buildWhereClause, buildAssignmentList } = new SQLBu
   username: 'username',
   email: 'email',
   file: 'file_txt',
-  roles: {
-    id: 'id',
-    roleKeys: `(SELECT ${jsonArray('role_id')} FROM user_roles WHERE user_id = id)`
-  }
+  roleKeys: `(SELECT GROUP_CONCAT(role_id SEPARATOR ', ') FROM user_roles WHERE user_id = id)`,
+  role: ['roleKeys']
 }, {
   idIn: idArray => `id IN (${idArray})`,
-  username: 'username = ?'
+  username: value => `username = ${value}`
 }, {
-  id: 'id',
-  username: 'username',
-  email: 'email',
-  file: 'file_txt',
+  id: value => `id = ${value}`,
+  username: value => `username = ${value}`,
+  email: value => `email = ${value}`,
+  file: value => `file_txt = ${value}`,
 });
 
 const UserType = _.Object({
@@ -40,7 +38,7 @@ const UserType = _.Object({
       type: _.List(RoleType),
       resolve({ roleKeys }, {}, { loaders }, { fields }) {
         if (!roleKeys) return;
-        return loaders.roleByKey.loadMany(JSON.parse(roleKeys), fields);
+        return loaders.roleByKey.loadMany(JSON.parse(`[${roleKeys}]`), fields);
       }
     } |> upgradeResolveFn
   }

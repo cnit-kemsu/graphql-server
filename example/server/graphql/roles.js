@@ -6,7 +6,7 @@ import { collation } from '../../../src/Loader/collation';
 
 const { buildSelectExprList, buildWhereClause, buildAssignmentList } = new SQLBuilder({}, {
   keys: idArray => `id IN (${idArray})`,
-  name: 'name = ?'
+  name: value => `name = ${value}`
 }, {});
 
 export const RoleType = _.Object({
